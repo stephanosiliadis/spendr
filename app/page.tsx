@@ -1,0 +1,180 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import { Plus } from "lucide-react"
+
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { CategoryChart } from "@/components/category-chart"
+import { MonthlyChart } from "@/components/monthly-chart"
+import { StatsCards } from "@/components/stats-cards"
+import type { Insights, Transaction } from "@/lib/types"
+import { cn, formatCurrency, formatDate } from "@/lib/utils"
+
+function getGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return "Good morning"
+  if (hour < 17) return "Good afternoon"
+  return "Good evening"
+}
+
+export default function DashboardPage() {
+  const [insights, setInsights] = useState<Insights | null>(null)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [insRes, txRes] = await Promise.all([
+          fetch("/api/insights"),
+          fetch("/api/transactions?limit=5&sort=date&order=desc"),
+        ])
+        const [insData, txData] = await Promise.all([
+          insRes.json(),
+          txRes.json(),
+        ])
+        setInsights(insRes.ok ? insData : null)
+        setTransactions(txData.data ?? [])
+      } catch (err) {
+        console.error("Failed to load dashboard data", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  return (
+    <div className="flex flex-col gap-6 p-6 pt-20 lg:pt-6 animate-fade-in">
+      {/* ── Page header ───────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">{getGreeting()} 👋</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Here's your financial overview for today
+          </p>
+        </div>
+        <Button asChild>
+          <Link href="/transactions">
+            <Plus className="h-4 w-4" />
+            Add Transaction
+          </Link>
+        </Button>
+      </div>
+
+      {/* ── Stats row ─────────────────────────────────────────────── */}
+      <StatsCards insights={insights} loading={loading} />
+
+      {/* ── Charts grid ───────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <MonthlyChart data={insights?.monthlyData ?? []} loading={loading} />
+        <CategoryChart
+          data={insights?.expenseCategoryData ?? []}
+          title="Expense Breakdown"
+          loading={loading}
+        />
+      </div>
+
+      {/* ── Recent transactions ───────────────────────────────────── */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <CardTitle className="text-base font-semibold">
+            Recent Transactions
+          </CardTitle>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/transactions" className="text-xs text-muted-foreground">
+              View all →
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-28" />
+                  </div>
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              ))}
+            </div>
+          ) : transactions.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <p className="text-sm text-muted-foreground">
+                No transactions yet. Add one to get started!
+              </p>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/transactions">
+                  <Plus className="h-3.5 w-3.5" />
+                  Add your first transaction
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {transactions.map((tx) => (
+                <div
+                  key={tx.id}
+                  className="flex items-center gap-4 py-3 first:pt-0 last:pb-0"
+                >
+                  {/* Type indicator */}
+                  <div
+                    className={cn(
+                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold",
+                      tx.type === "Income"
+                        ? "bg-income/15 text-income"
+                        : "bg-expense/15 text-expense"
+                    )}
+                  >
+                    {tx.type === "Income" ? "+" : "−"}
+                  </div>
+
+                  {/* Description + meta */}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">
+                      {tx.description}
+                    </p>
+                    <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span>{formatDate(tx.date)}</span>
+                      <span>·</span>
+                      <Badge
+                        variant="secondary"
+                        className="rounded-full px-1.5 py-0 text-[10px] font-normal"
+                      >
+                        {tx.category}
+                      </Badge>
+                      {tx.is_recurring === 1 && (
+                        <>
+                          <span>·</span>
+                          <span className="text-primary">Recurring</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Amount */}
+                  <p
+                    className={cn(
+                      "shrink-0 text-sm font-semibold tabular-nums",
+                      tx.type === "Income" ? "text-income" : "text-expense"
+                    )}
+                  >
+                    {tx.type === "Income" ? "+" : "−"}
+                    {formatCurrency(tx.amount)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
