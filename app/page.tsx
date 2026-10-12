@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { CategoryChart } from "@/components/category-chart"
 import { MonthlyChart } from "@/components/monthly-chart"
 import { StatsCards } from "@/components/stats-cards"
+import { TransactionForm } from "@/components/transaction-form"
 import type { Insights, Transaction } from "@/lib/types"
 import { cn, formatCurrency, formatDate } from "@/lib/utils"
 
@@ -25,6 +26,8 @@ export default function DashboardPage() {
   const [insights, setInsights] = useState<Insights | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
+  const [formOpen, setFormOpen] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     async function load() {
@@ -46,7 +49,7 @@ export default function DashboardPage() {
       }
     }
     load()
-  }, [])
+  }, [refreshKey])
 
   return (
     <div className="flex flex-col gap-6 p-6 pt-20 lg:pt-6 animate-fade-in">
@@ -58,11 +61,9 @@ export default function DashboardPage() {
             Here's your financial overview for today
           </p>
         </div>
-        <Button asChild>
-          <Link href="/transactions">
-            <Plus className="h-4 w-4" />
-            Add Transaction
-          </Link>
+        <Button onClick={() => setFormOpen(true)}>
+          <Plus className="h-4 w-4" />
+          Add Transaction
         </Button>
       </div>
 
@@ -110,11 +111,9 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 No transactions yet. Add one to get started!
               </p>
-              <Button asChild size="sm" variant="outline">
-                <Link href="/transactions">
-                  <Plus className="h-3.5 w-3.5" />
-                  Add your first transaction
-                </Link>
+              <Button size="sm" variant="outline" onClick={() => setFormOpen(true)}>
+                <Plus className="h-3.5 w-3.5" />
+                Add your first transaction
               </Button>
             </div>
           ) : (
@@ -175,6 +174,12 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      <TransactionForm
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        onSuccess={() => setRefreshKey((key) => key + 1)}
+      />
     </div>
   )
 }

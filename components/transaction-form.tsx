@@ -27,7 +27,7 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { cn, formatDateInput, todayISO } from "@/lib/utils"
+import { cn, formatCurrency, formatDateInput } from "@/lib/utils"
 import {
   CATEGORIES,
   type Category,
@@ -60,6 +60,10 @@ export function TransactionForm({
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [recurringTransactions, setRecurringTransactions] = useState<Transaction[]>([])
+  const [selectedRecurring, setSelectedRecurring] = useState("new")
+  const [recurringLoading, setRecurringLoading] = useState(false)
+  const [recurringError, setRecurringError] = useState(false)
 
   // Pre-fill when editing; reset when opening for a new transaction
   useEffect(() => {
@@ -80,8 +84,56 @@ export function TransactionForm({
         setIsRecurring(false)
       }
       setErrors({})
+      setSelectedRecurring("new")
     }
   }, [open, transaction])
+
+  useEffect(() => {
+    if (!open || isEditing) return
+
+    const controller = new AbortController()
+    setRecurringTransactions([])
+    setRecurringLoading(true)
+    setRecurringError(false)
+
+    async function loadRecurringTransactions() {
+      try {
+        const res = await fetch("/api/transactions/recurring", {
+          signal: controller.signal,
+          cache: "no-store",
+        })
+        if (!res.ok) throw new Error("Failed to fetch recurring transactions")
+        const data: Transaction[] = await res.json()
+        // Repeated occurrences with identical details need only one template.
+        const seen = new Set<string>()
+        const templates = data.filter((tx) => {
+          const key = JSON.stringify([tx.type, tx.amount, tx.description, tx.category])
+          if (seen.has(key)) return false
+          seen.add(key)
+          return true
+        })
+        if (!controller.signal.aborted) setRecurringTransactions(templates)
+      } catch {
+        if (!controller.signal.aborted) setRecurringError(true)
+      } finally {
+        if (!controller.signal.aborted) setRecurringLoading(false)
+      }
+    }
+
+    loadRecurringTransactions()
+    return () => controller.abort()
+  }, [open, isEditing])
+
+  const handleRecurringChange = (value: string) => {
+    const template = recurringTransactions.find((tx) => String(tx.id) === value)
+    setSelectedRecurring(value)
+    setType(template?.type ?? "Expense")
+    setAmount(template ? String(template.amount) : "")
+    setDescription(template?.description ?? "")
+    setCategory(template?.category ?? "Other")
+    setIsRecurring(!!template)
+    setErrors({})
+  }
 
   const validate = (): boolean => {
     const next: Record<string, string> = {}
@@ -140,7 +192,7 @@ export function TransactionForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Edit Transaction" : "Add Transaction"}
@@ -153,6 +205,38 @@ export function TransactionForm({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5 pt-1">
+          {!isEditing && (
+            <div className="space-y-1.5">
+              <Label htmlFor="txn-template">Use a recurring transaction</Label>
+              <Select
+                value={selectedRecurring}
+                onValueChange={handleRecurringChange}
+                disabled={recurringLoading || loading || recurringTransactions.length === 0}
+              >
+                <SelectTrigger id="txn-template">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new">Start from scratch</SelectItem>
+                  {recurringTransactions.map((tx) => (
+                    <SelectItem key={tx.id} value={String(tx.id)}>
+                      {tx.description} · {formatCurrency(tx.amount)} · {tx.type} · {tx.category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className={cn("text-xs text-muted-foreground", recurringError && "text-destructive")}>
+                {recurringLoading
+                  ? "Loading recurring transactions…"
+                  : recurringError
+                    ? "Could not load recurring transactions. You can still enter details manually."
+                    : recurringTransactions.length === 0
+                      ? "Mark a transaction as recurring to reuse its details here."
+                      : "Reuse saved details with a new date. You can change any field before saving."}
+              </p>
+            </div>
+          )}
+
           {/* Type */}
           <div className="space-y-1.5">
             <Label>Type</Label>

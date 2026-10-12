@@ -1,0 +1,227 @@
+[
+  {
+    "id": 1,
+    "type": "Income",
+    "amount": 615.09,
+    "description": "TA Salary",
+    "date": "2026-09-25",
+    "category": "Salary",
+    "is_recurring": 1
+  },
+  {
+    "id": 2,
+    "type": "Expense",
+    "amount": 130,
+    "description": "Maria's GIft",
+    "date": "2026-09-28",
+    "category": "Other",
+    "is_recurring": 0
+  },
+  {
+    "id": 3,
+    "type": "Expense",
+    "amount": 1.9,
+    "description": "Albert Heijn Breakfast",
+    "date": "2026-09-28",
+    "category": "Food & Dining",
+    "is_recurring": 0
+  },
+  {
+    "id": 4,
+    "type": "Expense",
+    "amount": 15.99,
+    "description": "Kebab Meijsters Lunch",
+    "date": "2026-09-29",
+    "category": "Food & Dining",
+    "is_recurring": 0
+  },
+  {
+    "id": 5,
+    "type": "Expense",
+    "amount": 69.86,
+    "description": "Jumbo Groceries",
+    "date": "2026-09-30",
+    "category": "Shopping",
+    "is_recurring": 1
+  },
+  {
+    "id": 6,
+    "type": "Expense",
+    "amount": 12.23,
+    "description": "Pantopoleio Groceries",
+    "date": "2026-09-30",
+    "category": "Shopping",
+    "is_recurring": 1
+  },
+  {
+    "id": 7,
+    "type": "Expense",
+    "amount": 9.39,
+    "description": "HSAG Event Ticket",
+    "date": "2026-10-01",
+    "category": "Entertainment",
+    "is_recurring": 0
+  },
+  {
+    "id": 8,
+    "type": "Expense",
+    "amount": 1.9,
+    "description": "Albert Heijn Snack",
+    "date": "2026-09-29",
+    "category": "Food & Dining",
+    "is_recurring": 0
+  },
+  {
+    "id": 9,
+    "type": "Expense",
+    "amount": 3.63,
+    "description": "Bus",
+    "date": "2026-09-28",
+    "category": "Transport",
+    "is_recurring": 1
+  },
+  {
+    "id": 10,
+    "type": "Expense",
+    "amount": 3.69,
+    "description": "Bus",
+    "date": "2026-09-29",
+    "category": "Transport",
+    "is_recurring": 1
+  },
+  {
+    "id": 11,
+    "type": "Expense",
+    "amount": 26,
+    "description": "Madia's Gift",
+    "date": "2026-09-30",
+    "category": "Other",
+    "is_recurring": 0
+  },
+  {
+    "id": 12,
+    "type": "Expense",
+    "amount": 5.32,
+    "description": "Bus",
+    "date": "2026-10-03",
+    "category": "Transport",
+    "is_recurring": 1
+  },
+  {
+    "id": 13,
+    "type": "Expense",
+    "amount": 1.78,
+    "description": "Bus",
+    "date": "2026-10-02",
+    "category": "Transport",
+    "is_recurring": 1
+  },
+  {
+    "id": 14,
+    "type": "Expense",
+    "amount": 17.99,
+    "description": "Go-Karts",
+    "date": "2026-10-02",
+    "category": "Entertainment",
+    "is_recurring": 0
+  },
+  {
+    "id": 15,
+    "type": "Expense",
+    "amount": 3.41,
+    "description": "Bus",
+    "date": "2026-10-04",
+    "category": "Transport",
+    "is_recurring": 1
+  },
+  {
+    "id": 16,
+    "type": "Expense",
+    "amount": 9.5,
+    "description": "Uber",
+    "date": "2026-10-04",
+    "category": "Transport",
+    "is_recurring": 0
+  },
+  {
+    "id": 17,
+    "type": "Expense",
+    "amount": 1.9,
+    "description": "Albert Heijn Breakfast",
+    "date": "2026-10-05",
+    "category": "Food & Dining",
+    "is_recurring": 0
+  },
+  {
+    "id": 18,
+    "type": "Expense",
+    "amount": 1.9,
+    "description": "Albert Heijn Breakfast",
+    "date": "2026-10-06",
+    "category": "Food & Dining",
+    "is_recurring": 0
+  },
+  {
+    "id": 19,
+    "type": "Expense",
+    "amount": 34.99,
+    "description": "Xenos Pan",
+    "date": "2026-10-06",
+    "category": "Shopping",
+    "is_recurring": 0
+  },
+  {
+    "id": 20,
+    "type": "Expense",
+    "amount": 3.63,
+    "description": "Bus",
+    "date": "2026-10-06",
+    "category": "Transport",
+    "is_recurring": 1
+  },
+  {
+    "id": 21,
+    "type": "Expense",
+    "amount": 5.5,
+    "description": "DE Coffee",
+    "date": "2026-10-07",
+    "category": "Food & Dining",
+    "is_recurring": 0
+  },
+  {
+    "id": 22,
+    "type": "Expense",
+    "amount": 3.63,
+    "description": "Bus",
+    "date": "2026-10-09",
+    "category": "Transport",
+    "is_recurring": 1
+  },
+  {
+    "id": 23,
+    "type": "Expense",
+    "amount": 105.49,
+    "description": "Jumbo Groceries",
+    "date": "2026-10-10",
+    "category": "Shopping",
+    "is_recurring": 1
+  },
+  {
+    "id": 24,
+    "type": "Income",
+    "amount": 4,
+    "description": "Christina's Groceries",
+    "date": "2026-10-10",
+    "category": "Shopping",
+    "is_recurring": 0
+  },
+  {
+    "id": 25,
+    "type": "Expense",
+    "amount": 3.8,
+    "description": "G Corner Coffee",
+    "date": "2026-10-11",
+    "category": "Food & Dining",
+    "is_recurring": 0
+  }
+]

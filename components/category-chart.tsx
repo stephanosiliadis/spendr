@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Cell,
@@ -7,28 +7,28 @@ import {
   PieChart,
   ResponsiveContainer,
   Tooltip,
-} from "recharts"
+} from "recharts";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { CATEGORY_COLORS, type CategoryData } from "@/lib/types"
-import { formatCurrency } from "@/lib/utils"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CATEGORY_COLORS, type CategoryData } from "@/lib/types";
+import { formatCurrency } from "@/lib/utils";
 
 interface CategoryChartProps {
-  data: CategoryData[]
-  title?: string
-  loading?: boolean
+  data: CategoryData[];
+  title?: string;
+  loading?: boolean;
 }
 
 function CustomTooltip({
   active,
   payload,
 }: {
-  active?: boolean
-  payload?: Array<{ payload: CategoryData }>
+  active?: boolean;
+  payload?: Array<{ payload: CategoryData }>;
 }) {
-  if (!active || !payload?.length) return null
-  const d = payload[0].payload
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
 
   return (
     <div className="min-w-[160px] rounded-lg border border-border bg-card p-3 shadow-xl">
@@ -50,13 +50,11 @@ function CustomTooltip({
         <span className="font-medium text-foreground">{d.count}</span>
       </p>
     </div>
-  )
+  );
 }
 
 function LegendText({ value }: { value: string }) {
-  return (
-    <span className="text-xs text-muted-foreground">{value}</span>
-  )
+  return <span className="text-xs text-muted-foreground">{value}</span>;
 }
 
 export function CategoryChart({
@@ -74,7 +72,7 @@ export function CategoryChart({
           <Skeleton className="mx-auto h-64 w-64 rounded-full" />
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (!data.length) {
@@ -87,7 +85,7 @@ export function CategoryChart({
           <p className="text-sm text-muted-foreground">No data available</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -131,5 +129,5 @@ export function CategoryChart({
         </ResponsiveContainer>
       </CardContent>
     </Card>
-  )
+  );
 }

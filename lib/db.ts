@@ -13,8 +13,7 @@ import type {
 // ──────────────────────────────────────────────
 // File path resolution
 // ──────────────────────────────────────────────
-const DATA_DIR =
-  process.env.DATA_DIR ?? path.join(process.cwd(), "..", "data");
+const DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), "data");
 const JSON_PATH = path.join(DATA_DIR, "transactions.json");
 
 if (!fs.existsSync(DATA_DIR)) {
@@ -48,7 +47,7 @@ function nextId(transactions: Transaction[]): number {
 // ──────────────────────────────────────────────
 
 export function getTransactions(
-  filters: TransactionFilters = {}
+  filters: TransactionFilters = {},
 ): PaginatedTransactions {
   const {
     type,
@@ -104,6 +103,12 @@ export function getTransactions(
   return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
 }
 
+export function getRecurringTransactions(): Transaction[] {
+  return readAll()
+    .filter((t) => t.is_recurring === 1)
+    .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+}
+
 export function getTransactionById(id: number): Transaction | null {
   return readAll().find((t) => t.id === id) ?? null;
 }
@@ -126,7 +131,7 @@ export function createTransaction(input: TransactionInput): Transaction {
 
 export function updateTransaction(
   id: number,
-  input: TransactionInput
+  input: TransactionInput,
 ): Transaction | null {
   const all = readAll();
   const idx = all.findIndex((t) => t.id === id);
@@ -198,7 +203,7 @@ export function getInsights(): Insights {
       const [year, month] = key.split("-");
       const label = new Date(
         parseInt(year),
-        parseInt(month) - 1
+        parseInt(month) - 1,
       ).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
       return {
         month: label,
@@ -231,7 +236,7 @@ export function getInsights(): Insights {
 
 function buildCategoryData(
   transactions: Transaction[],
-  total: number
+  total: number,
 ): CategoryData[] {
   const map = new Map<string, { amount: number; count: number }>();
   transactions.forEach((t) => {
