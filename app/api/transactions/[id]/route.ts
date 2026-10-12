@@ -5,6 +5,7 @@ import {
   deleteTransaction,
 } from "@/lib/db";
 import type { TransactionInput } from "@/lib/types";
+import { TransferValidationError } from "@/lib/data-transfer";
 
 type Params = { params: { id: string } };
 
@@ -71,6 +72,9 @@ export async function PUT(req: NextRequest, { params }: Params) {
     }
     return NextResponse.json(updated);
   } catch (err) {
+    if (err instanceof TransferValidationError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error("[PUT /api/transactions/:id]", err);
     return NextResponse.json(
       { error: "Failed to update transaction" },
@@ -92,8 +96,11 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
         { status: 404 }
       );
     }
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, ...deleted });
   } catch (err) {
+    if (err instanceof TransferValidationError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error("[DELETE /api/transactions/:id]", err);
     return NextResponse.json(
       { error: "Failed to delete transaction" },

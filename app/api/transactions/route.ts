@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTransactions, createTransaction } from "@/lib/db";
 import type { TransactionFilters, TransactionInput } from "@/lib/types";
+import { TransferValidationError } from "@/lib/data-transfer";
 
 export async function GET(req: NextRequest) {
   try {
@@ -70,6 +71,9 @@ export async function POST(req: NextRequest) {
     const transaction = createTransaction(body);
     return NextResponse.json(transaction, { status: 201 });
   } catch (err) {
+    if (err instanceof TransferValidationError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error("[POST /api/transactions]", err);
     return NextResponse.json(
       { error: "Failed to create transaction" },

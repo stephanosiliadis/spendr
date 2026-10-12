@@ -41,7 +41,44 @@ export function DeleteDialog({
         method: "DELETE",
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      toast.success("Transaction deleted")
+      const { undoToken, undoExpiresAt } = await res.json()
+      let restoring = false
+      const showUndo = () => {
+        const remaining = undoExpiresAt - Date.now()
+        if (remaining <= 0) return
+        toast.success("Transaction deleted", {
+          duration: Math.min(15_000, remaining),
+          description: "You can undo this deletion for up to one minute.",
+          action: {
+            label: "Undo",
+            onClick: async () => {
+              if (restoring) return
+              restoring = true
+              try {
+                const undoRes = await fetch("/api/transactions/undo", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ token: undoToken }),
+                })
+                if (!undoRes.ok) {
+                  const data = await undoRes.json().catch(() => ({}))
+                  throw new Error(data.error ?? "Could not restore transaction.")
+                }
+                toast.success("Transaction restored")
+                onSuccess()
+              } catch (error) {
+                onSuccess()
+                toast.error(error instanceof Error ? error.message : "Could not restore transaction.")
+                // A failed request can be retried while the server-side token is valid.
+                showUndo()
+              } finally {
+                restoring = false
+              }
+            },
+          },
+        })
+      }
+      showUndo()
       onSuccess()
       onOpenChange(false)
     } catch {
@@ -66,8 +103,8 @@ export function DeleteDialog({
             <AlertDialogTitle>Delete Transaction?</AlertDialogTitle>
           </div>
           <AlertDialogDescription>
-            This action is permanent and cannot be undone. The following
-            transaction will be removed from your records.
+            The following transaction will be removed from your records.
+            An Undo action will appear after deletion and remain visible for 15 seconds.
           </AlertDialogDescription>
         </AlertDialogHeader>
 

@@ -1,5 +1,18 @@
 import fs from "fs";
 import path from "path";
+import { createHash, randomUUID } from "crypto";
+import {
+  transactionFingerprint,
+  TransferValidationError,
+  MAX_BACKUP_BYTES,
+  MAX_BACKUP_TRANSACTIONS,
+  validateBackup,
+  validateImportRequest,
+  validateOperationId,
+  validateTransactionInput,
+  type SpendrBackup,
+  type ThemePreference,
+} from "./data-transfer";
 import type {
   Transaction,
   TransactionInput,
@@ -15,6 +28,29 @@ import type {
 // ──────────────────────────────────────────────
 const DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), "data");
 const JSON_PATH = path.join(DATA_DIR, "transactions.json");
+const METADATA_PATH = path.join(DATA_DIR, "transaction-meta.json");
+const JOURNAL_PATH = path.join(DATA_DIR, "transaction-journal.json");
+export const UNDO_WINDOW_MS = 60_000;
+
+interface DeletedTransaction {
+  token: string;
+  expiresAt: number;
+  transaction: Transaction;
+  restored?: boolean;
+}
+
+type ImportResult = { imported: number; skipped: number };
+type RestoreResult = { restored: number; recoveryFile: string };
+interface OperationReceipt {
+  id: string;
+  kind: "import" | "restore";
+  hash: string;
+  result: ImportResult | RestoreResult;
+}
+interface TransactionMetadata {
+  deletions: DeletedTransaction[];
+  operations: OperationReceipt[];
+}
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -24,22 +60,97 @@ if (!fs.existsSync(DATA_DIR)) {
 // Read / write helpers
 // ──────────────────────────────────────────────
 function readAll(): Transaction[] {
+  recoverPendingWrite();
   if (!fs.existsSync(JSON_PATH)) return [];
+  const transactions: unknown = JSON.parse(fs.readFileSync(JSON_PATH, "utf8"));
+  if (!Array.isArray(transactions)) throw new Error("Transaction storage must be an array.");
+  return transactions as Transaction[];
+}
+
+function syncDirectory(directory: string): void {
+  let descriptor: number | undefined;
   try {
-    return JSON.parse(fs.readFileSync(JSON_PATH, "utf8")) as Transaction[];
-  } catch {
-    return [];
+    descriptor = fs.openSync(directory, "r");
+    fs.fsyncSync(descriptor);
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    // Windows and some mounted filesystems cannot open/fsync directory handles.
+    if (!["EINVAL", "ENOTSUP", "EOPNOTSUPP", "EBADF"].includes(code ?? "")
+      && !(process.platform === "win32" && ["EPERM", "EACCES", "EISDIR"].includes(code ?? ""))) throw error;
+  } finally {
+    if (descriptor !== undefined) fs.closeSync(descriptor);
   }
 }
 
-function writeAll(transactions: Transaction[]): void {
-  fs.writeFileSync(JSON_PATH, JSON.stringify(transactions, null, 2), "utf8");
+function writeJsonAtomically(filename: string, value: unknown): void {
+  const temporaryPath = `${filename}.${randomUUID()}.tmp`;
+  try {
+    const descriptor = fs.openSync(temporaryPath, "wx");
+    try {
+      fs.writeFileSync(descriptor, JSON.stringify(value, null, 2), "utf8");
+      fs.fsyncSync(descriptor);
+    } finally {
+      fs.closeSync(descriptor);
+    }
+    fs.renameSync(temporaryPath, filename);
+    syncDirectory(path.dirname(filename));
+  } finally {
+    if (fs.existsSync(temporaryPath)) fs.unlinkSync(temporaryPath);
+  }
+}
+
+function recoverPendingWrite(): void {
+  if (!fs.existsSync(JOURNAL_PATH)) return;
+  const journal = JSON.parse(fs.readFileSync(JOURNAL_PATH, "utf8")) as {
+    transactions: Transaction[]; metadata: TransactionMetadata;
+  };
+  writeJsonAtomically(JSON_PATH, journal.transactions);
+  writeJsonAtomically(METADATA_PATH, journal.metadata);
+  fs.unlinkSync(JOURNAL_PATH);
+  syncDirectory(DATA_DIR);
+}
+
+function readMetadata(): TransactionMetadata {
+  recoverPendingWrite();
+  if (!fs.existsSync(METADATA_PATH)) return { deletions: [], operations: [] };
+  const metadata = JSON.parse(fs.readFileSync(METADATA_PATH, "utf8")) as TransactionMetadata;
+  if (!Array.isArray(metadata.deletions) || !Array.isArray(metadata.operations)) {
+    throw new Error("Transaction metadata is invalid.");
+  }
+  return { ...metadata, deletions: metadata.deletions.filter((entry) => entry.expiresAt > Date.now()) };
+}
+
+function commitTransactions(transactions: Transaction[], metadata = readMetadata()): void {
+  if (transactions.length > MAX_BACKUP_TRANSACTIONS
+    || Buffer.byteLength(JSON.stringify({
+      app: "spendr", version: 1, createdAt: new Date().toISOString(), settings: { theme: "system" }, transactions,
+    }, null, 2), "utf8") > MAX_BACKUP_BYTES) {
+    throw new TransferValidationError("Dataset exceeds the supported backup limit (100,000 transactions / 100 MiB).", 413);
+  }
+  // A durable journal makes data and Undo/import/restore receipts one recoverable operation.
+  // Every subsequent read completes an interrupted commit before exposing its data.
+  writeJsonAtomically(JOURNAL_PATH, { transactions, metadata });
+  recoverPendingWrite();
+}
+
+function operationHash(value: unknown): string {
+  return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+}
+
+function previousOperation(metadata: TransactionMetadata, id: string, kind: OperationReceipt["kind"], hash: string): OperationReceipt | undefined {
+  const receipt = metadata.operations.find((item) => item.id === id);
+  if (receipt && (receipt.kind !== kind || receipt.hash !== hash)) {
+    throw new TransferValidationError("This operation ID was already used with different data. Choose a new file or start a new import.", 409);
+  }
+  return receipt;
 }
 
 function nextId(transactions: Transaction[]): number {
-  return transactions.length === 0
-    ? 1
-    : Math.max(...transactions.map((t) => t.id)) + 1;
+  // Reserve IDs while Undo is available, even when the highest ID was deleted.
+  const reserved = readMetadata().deletions.filter((entry) => !entry.restored).map((entry) => entry.transaction);
+  const maximum = [...transactions, ...reserved].reduce((max, transaction) => Math.max(max, transaction.id), 0);
+  if (maximum >= Number.MAX_SAFE_INTEGER) throw new Error("Transaction ID range exhausted.");
+  return maximum + 1;
 }
 
 // ──────────────────────────────────────────────
@@ -114,6 +225,7 @@ export function getTransactionById(id: number): Transaction | null {
 }
 
 export function createTransaction(input: TransactionInput): Transaction {
+  input = validateTransactionInput(input);
   const all = readAll();
   const tx: Transaction = {
     id: nextId(all),
@@ -125,7 +237,7 @@ export function createTransaction(input: TransactionInput): Transaction {
     is_recurring: input.is_recurring ? 1 : 0,
   };
   all.push(tx);
-  writeAll(all);
+  commitTransactions(all);
   return tx;
 }
 
@@ -133,6 +245,7 @@ export function updateTransaction(
   id: number,
   input: TransactionInput,
 ): Transaction | null {
+  input = validateTransactionInput(input);
   const all = readAll();
   const idx = all.findIndex((t) => t.id === id);
   if (idx === -1) return null;
@@ -145,16 +258,111 @@ export function updateTransaction(
     category: input.category,
     is_recurring: input.is_recurring ? 1 : 0,
   };
-  writeAll(all);
+  commitTransactions(all);
   return all[idx];
 }
 
-export function deleteTransaction(id: number): boolean {
+export function deleteTransaction(id: number): { undoToken: string; undoExpiresAt: number } | null {
   const all = readAll();
-  const next = all.filter((t) => t.id !== id);
-  if (next.length === all.length) return false;
-  writeAll(next);
-  return true;
+  const transaction = all.find((t) => t.id === id);
+  if (!transaction) {
+    const previous = readMetadata().deletions.find((item) => item.transaction.id === id && !item.restored);
+    return previous ? { undoToken: previous.token, undoExpiresAt: previous.expiresAt } : null;
+  }
+  const entry: DeletedTransaction = {
+    token: randomUUID(),
+    expiresAt: Date.now() + UNDO_WINDOW_MS,
+    transaction,
+  };
+  const metadata = readMetadata();
+  metadata.deletions.push(entry);
+  commitTransactions(all.filter((t) => t.id !== id), metadata);
+  return { undoToken: entry.token, undoExpiresAt: entry.expiresAt };
+}
+
+export function undoDeleteTransaction(token: string): Transaction {
+  const metadata = readMetadata();
+  const entry = metadata.deletions.find((item) => item.token === token);
+  if (!entry) throw new TransferValidationError("Undo has expired or this transaction was already restored.", 410);
+  if (entry.restored) return entry.transaction;
+  const all = readAll();
+  if (all.some((transaction) => transaction.id === entry.transaction.id)) {
+    throw new TransferValidationError("This ID is already in use. Undo will not overwrite an existing transaction.", 409);
+  }
+  entry.restored = true;
+  commitTransactions([...all, entry.transaction], metadata);
+  return entry.transaction;
+}
+
+export function importTransactions(inputs: TransactionInput[], skipDuplicates: boolean, operationId: string): ImportResult {
+  const { transactions } = validateImportRequest({ transactions: inputs, skipDuplicates, operationId });
+  const metadata = readMetadata();
+  const hash = operationHash({ transactions, skipDuplicates });
+  const previous = previousOperation(metadata, operationId, "import", hash);
+  if (previous) return previous.result as ImportResult;
+  const all = readAll();
+  const seen = new Set(all.map(transactionFingerprint));
+  let id = nextId(all);
+  let imported = 0;
+  let skipped = 0;
+  for (const input of transactions) {
+    const key = transactionFingerprint(input);
+    if (skipDuplicates && seen.has(key)) {
+      skipped++;
+      continue;
+    }
+    if (!Number.isSafeInteger(id)) throw new Error("Transaction ID range exhausted.");
+    all.push({ ...input, id: id++, is_recurring: input.is_recurring ? 1 : 0 });
+    seen.add(key);
+    imported++;
+  }
+  const result = { imported, skipped };
+  metadata.operations.push({ id: operationId, kind: "import", hash, result });
+  commitTransactions(all, metadata);
+  return result;
+}
+
+export function createBackup(theme: ThemePreference): SpendrBackup {
+  return {
+    app: "spendr",
+    version: 1,
+    createdAt: new Date().toISOString(),
+    settings: { theme },
+    transactions: readAll(),
+  };
+}
+
+export function getRecoveryBackup(filename: string): SpendrBackup {
+  if (!/^pre-restore-\d+-[0-9a-f-]{36}\.json$/.test(filename)) {
+    throw new TransferValidationError("Invalid recovery filename.");
+  }
+  const recoveryPath = path.join(DATA_DIR, "backups", filename);
+  if (!fs.existsSync(recoveryPath)) throw new TransferValidationError("Recovery backup not found.", 404);
+  return JSON.parse(fs.readFileSync(recoveryPath, "utf8")) as SpendrBackup;
+}
+
+export function restoreBackup(backup: SpendrBackup, currentTheme: ThemePreference, operationId: string): RestoreResult {
+  validateOperationId(operationId);
+  const validated = validateBackup(backup);
+  const metadata = readMetadata();
+  const hash = operationHash({ backup: validated, currentTheme });
+  const previous = previousOperation(metadata, operationId, "restore", hash);
+  if (previous) return previous.result as RestoreResult;
+  // Preserve even legacy records that fail the stricter import validator.
+  const recovery: SpendrBackup = {
+    app: "spendr", version: 1, createdAt: new Date().toISOString(),
+    settings: { theme: currentTheme }, transactions: readAll(),
+  };
+  const backupDirectory = path.join(DATA_DIR, "backups");
+  fs.mkdirSync(backupDirectory, { recursive: true });
+  const recoveryFile = `pre-restore-${Date.now()}-${randomUUID()}.json`;
+  writeJsonAtomically(path.join(backupDirectory, recoveryFile), recovery);
+  // Old Undo tokens must never insert transactions into the restored dataset.
+  metadata.deletions = [];
+  const result = { restored: validated.transactions.length, recoveryFile };
+  metadata.operations.push({ id: operationId, kind: "restore", hash, result });
+  commitTransactions(validated.transactions, metadata);
+  return result;
 }
 
 // ──────────────────────────────────────────────

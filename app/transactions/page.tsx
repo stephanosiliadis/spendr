@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Download, FileJson, FileText, Plus } from "lucide-react"
+import { DatabaseBackup, Download, FileJson, FileText, Plus, Upload } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -14,6 +14,8 @@ import {
 import { TransactionsTable } from "@/components/transactions-table"
 import { TransactionForm } from "@/components/transaction-form"
 import { DeleteDialog } from "@/components/delete-dialog"
+import { ImportDialog } from "@/components/import-dialog"
+import { BackupDialog } from "@/components/backup-dialog"
 import { type Transaction } from "@/lib/types"
 
 export default function TransactionsPage() {
@@ -23,6 +25,8 @@ export default function TransactionsPage() {
     useState<Transaction | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
+  const [backupOpen, setBackupOpen] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
 
   const handleEdit = (tx: Transaction) => {
@@ -68,15 +72,20 @@ export default function TransactionsPage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {/* Export dropdown */}
+            {/* Data management */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-1.5">
                   <Download className="h-4 w-4" />
-                  Export
+                  Data
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem onSelect={() => setImportOpen(true)}>
+                  <Upload className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Import CSV
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => exportAs("csv")}>
                   <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
                   Export as CSV
@@ -85,6 +94,11 @@ export default function TransactionsPage() {
                 <DropdownMenuItem onClick={() => exportAs("json")}>
                   <FileJson className="h-4 w-4 mr-2 text-muted-foreground" />
                   Export as JSON
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => setBackupOpen(true)}>
+                  <DatabaseBackup className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Backup &amp; restore
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -119,6 +133,18 @@ export default function TransactionsPage() {
         open={formOpen}
         onOpenChange={handleFormOpenChange}
         transaction={editingTransaction}
+        onSuccess={handleSuccess}
+      />
+
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onSuccess={handleSuccess}
+      />
+
+      <BackupDialog
+        open={backupOpen}
+        onOpenChange={setBackupOpen}
         onSuccess={handleSuccess}
       />
 
