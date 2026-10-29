@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -13,19 +13,19 @@ import {
   Search,
   Trash2,
   X,
-} from "lucide-react"
+} from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -33,21 +33,21 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { cn, formatCurrency, formatDate } from "@/lib/utils"
+} from "@/components/ui/tooltip";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import {
   CATEGORIES,
   type Category,
   type PaginatedTransactions,
   type Transaction,
   type TransactionType,
-} from "@/lib/types"
+} from "@/lib/types";
 
 // ─── Category decoration ────────────────────────────────────────────────────
 
@@ -64,7 +64,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
   Education: "📚",
   Travel: "✈️",
   Other: "📦",
-}
+};
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -89,7 +89,7 @@ interface TransactionsTableProps {
   refreshKey?: number
 }
 
-const LIMIT = 20
+const LIMIT = 20;
 
 const DEFAULT_FILTERS: Filters = {
   search: "",
@@ -101,15 +101,15 @@ const DEFAULT_FILTERS: Filters = {
   maxAmount: "",
   sort: "date",
   order: "desc",
-}
+};
 
 // ─── Sort icon helper ─────────────────────────────────────────────────────────
 
 function SortIcon({ col, active, order }: { col: SortCol; active: SortCol; order: SortOrder }) {
-  if (active !== col) return <ArrowUpDown className="h-3 w-3 opacity-40" />
+  if (active !== col) {return <ArrowUpDown className="h-3 w-3 opacity-40" />;}
   return order === "asc"
     ? <ArrowUp className="h-3 w-3 text-primary" />
-    : <ArrowDown className="h-3 w-3 text-primary" />
+    : <ArrowDown className="h-3 w-3 text-primary" />;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -119,49 +119,49 @@ export function TransactionsTable({
   onDelete,
   refreshKey,
 }: TransactionsTableProps) {
-  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
-  const [debouncedSearch, setDebouncedSearch] = useState("")
-  const [page, setPage] = useState(1)
-  const [data, setData] = useState<PaginatedTransactions | null>(null)
-  const [loading, setLoading] = useState(true)
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState<PaginatedTransactions | null>(null);
+  const [loading, setLoading] = useState(true);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce search input
   useEffect(() => {
-    if (searchTimer.current) clearTimeout(searchTimer.current)
+    if (searchTimer.current) {clearTimeout(searchTimer.current);}
     searchTimer.current = setTimeout(() => {
-      setDebouncedSearch(filters.search)
-      setPage(1)
-    }, 300)
+      setDebouncedSearch(filters.search);
+      setPage(1);
+    }, 300);
     return () => {
-      if (searchTimer.current) clearTimeout(searchTimer.current)
-    }
-  }, [filters.search])
+      if (searchTimer.current) {clearTimeout(searchTimer.current);}
+    };
+  }, [filters.search]);
 
   // Fetch data whenever relevant state changes
   const fetchData = useCallback(async () => {
-    setLoading(true)
-    const q = new URLSearchParams()
-    q.set("page", String(page))
-    q.set("limit", String(LIMIT))
-    q.set("sort", filters.sort)
-    q.set("order", filters.order)
-    if (debouncedSearch) q.set("search", debouncedSearch)
-    if (filters.type !== "all") q.set("type", filters.type)
-    if (filters.category !== "all") q.set("category", filters.category)
-    if (filters.dateFrom) q.set("dateFrom", filters.dateFrom)
-    if (filters.dateTo) q.set("dateTo", filters.dateTo)
-    if (filters.minAmount) q.set("minAmount", filters.minAmount)
-    if (filters.maxAmount) q.set("maxAmount", filters.maxAmount)
+    setLoading(true);
+    const q = new URLSearchParams();
+    q.set("page", String(page));
+    q.set("limit", String(LIMIT));
+    q.set("sort", filters.sort);
+    q.set("order", filters.order);
+    if (debouncedSearch) {q.set("search", debouncedSearch);}
+    if (filters.type !== "all") {q.set("type", filters.type);}
+    if (filters.category !== "all") {q.set("category", filters.category);}
+    if (filters.dateFrom) {q.set("dateFrom", filters.dateFrom);}
+    if (filters.dateTo) {q.set("dateTo", filters.dateTo);}
+    if (filters.minAmount) {q.set("minAmount", filters.minAmount);}
+    if (filters.maxAmount) {q.set("maxAmount", filters.maxAmount);}
 
     try {
-      const res = await fetch(`/api/transactions?${q.toString()}`)
-      if (!res.ok) throw new Error()
-      setData(await res.json())
+      const res = await fetch(`/api/transactions?${q.toString()}`);
+      if (!res.ok) {throw new Error();}
+      setData(await res.json());
     } catch {
-      setData(null)
+      setData(null);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }, [
     page,
@@ -174,33 +174,33 @@ export function TransactionsTable({
     filters.dateTo,
     filters.minAmount,
     filters.maxAmount,
-  ])
+  ]);
 
   useEffect(() => {
-    fetchData()
-  }, [fetchData, refreshKey])
+    fetchData();
+  }, [fetchData, refreshKey]);
 
   // ─── Filter helpers ─────────────────────────────────────────────────────
 
   const update = <K extends keyof Filters>(key: K, value: Filters[K]) => {
-    setFilters((prev) => ({ ...prev, [key]: value }))
-    if (key !== "search") setPage(1)
-  }
+    setFilters((prev) => ({ ...prev, [key]: value }));
+    if (key !== "search") {setPage(1);}
+  };
 
   const clearFilters = () => {
-    setFilters(DEFAULT_FILTERS)
-    setDebouncedSearch("")
-    setPage(1)
-  }
+    setFilters(DEFAULT_FILTERS);
+    setDebouncedSearch("");
+    setPage(1);
+  };
 
   const toggleSort = (col: SortCol) => {
     setFilters((prev) => ({
       ...prev,
       sort: col,
       order: prev.sort === col && prev.order === "desc" ? "asc" : "desc",
-    }))
-    setPage(1)
-  }
+    }));
+    setPage(1);
+  };
 
   const hasActiveFilters =
     filters.search !== "" ||
@@ -209,12 +209,12 @@ export function TransactionsTable({
     filters.dateFrom !== "" ||
     filters.dateTo !== "" ||
     filters.minAmount !== "" ||
-    filters.maxAmount !== ""
+    filters.maxAmount !== "";
 
   // ─── Shared date input class ────────────────────────────────────────────
 
   const dateInputCls =
-    "h-9 w-36 rounded-md border border-input bg-background px-2.5 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:[color-scheme:dark]"
+    "h-9 w-36 rounded-md border border-input bg-background px-2.5 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:[color-scheme:dark]";
 
   // ─── Render ─────────────────────────────────────────────────────────────
 
@@ -415,7 +415,7 @@ export function TransactionsTable({
               </TableRow>
             ) : (
               data.data.map((tx) => {
-                const isIncome = tx.type === "Income"
+                const isIncome = tx.type === "Income";
                 return (
                   <TableRow key={tx.id} className="group">
                     {/* ID */}
@@ -431,7 +431,7 @@ export function TransactionsTable({
                           "text-xs font-semibold",
                           isIncome
                             ? "border-income/30 bg-income-muted text-income"
-                            : "border-expense/30 bg-expense-muted text-expense"
+                            : "border-expense/30 bg-expense-muted text-expense",
                         )}
                       >
                         {tx.type}
@@ -443,7 +443,7 @@ export function TransactionsTable({
                       <span
                         className={cn(
                           "font-semibold tabular-nums text-sm",
-                          isIncome ? "text-income" : "text-expense"
+                          isIncome ? "text-income" : "text-expense",
                         )}
                       >
                         {isIncome ? "+" : "−"}
@@ -458,7 +458,7 @@ export function TransactionsTable({
                           <TooltipTrigger asChild>
                             <span className="cursor-default text-sm">
                               {tx.description.length > 40
-                                ? tx.description.slice(0, 40) + "…"
+                                ? `${tx.description.slice(0, 40)  }…`
                                 : tx.description}
                             </span>
                           </TooltipTrigger>
@@ -526,7 +526,7 @@ export function TransactionsTable({
                       </div>
                     </TableCell>
                   </TableRow>
-                )
+                );
               })
             )}
           </TableBody>
@@ -567,5 +567,5 @@ export function TransactionsTable({
         </div>
       )}
     </div>
-  )
+  );
 }

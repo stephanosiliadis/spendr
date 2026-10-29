@@ -1,0 +1,66 @@
+{
+  "root": true,
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2022": true
+  },
+  "rules": {
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
+    "no-console": [
+      "warn",
+      {
+        "allow": ["warn", "error"]
+      }
+    ],
+    "eqeqeq": ["error", "always"],
+    "curly": ["error", "all"],
+    "prefer-const": "error",
+    "no-var": "error",
+    "no-debugger": "error",
+    "no-alert": "warn",
+    "no-duplicate-imports": "error",
+    "object-shorthand": ["error", "always"],
+    "prefer-template": "error",
+    "no-trailing-spaces": "error",
+    "eol-last": ["error", "always"],
+    "semi": ["error", "always"],
+    "quotes": [
+      "error",
+      "double",
+      {
+        "avoidEscape": true
+      }
+    ],
+    "comma-dangle": ["error", "always-multiline"],
+    "indent": [
+      "error",
+      2,
+      {
+        "SwitchCase": 1
+      }
+    ]
+  },
+  "ignorePatterns": [
+    "node_modules/",
+    ".next/",
+    "out/",
+    "build/",
+    "dist/",
+    "coverage/",
+    "next-env.d.ts"
+  ]
+}

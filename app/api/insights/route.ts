@@ -9,7 +9,7 @@ export async function GET() {
     console.error("[GET /api/insights]", err);
     return NextResponse.json(
       { error: "Failed to compute insights" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

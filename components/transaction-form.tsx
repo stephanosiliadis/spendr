@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useEffect, useState } from "react"
-import { toast } from "sonner"
-import { CalendarIcon, Loader2 } from "lucide-react"
-import { format } from "date-fns"
+import * as React from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { CalendarIcon, Loader2 } from "lucide-react";
+import { format } from "date-fns";
 
 import {
   Dialog,
@@ -13,28 +13,28 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { cn, formatCurrency, formatDateInput } from "@/lib/utils"
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn, formatCurrency, formatDateInput } from "@/lib/utils";
 import {
   CATEGORIES,
   type Category,
   type Transaction,
   type TransactionInput,
   type TransactionType,
-} from "@/lib/types"
+} from "@/lib/types";
 
 interface TransactionFormProps {
   open: boolean
@@ -49,114 +49,114 @@ export function TransactionForm({
   transaction,
   onSuccess,
 }: TransactionFormProps) {
-  const isEditing = !!transaction
+  const isEditing = !!transaction;
 
-  const [type, setType] = useState<TransactionType>("Expense")
-  const [amount, setAmount] = useState("")
-  const [description, setDescription] = useState("")
-  const [date, setDate] = useState<Date>(new Date())
-  const [category, setCategory] = useState<Category>("Other")
-  const [isRecurring, setIsRecurring] = useState(false)
-  const [calendarOpen, setCalendarOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [recurringTransactions, setRecurringTransactions] = useState<Transaction[]>([])
-  const [selectedRecurring, setSelectedRecurring] = useState("new")
-  const [recurringLoading, setRecurringLoading] = useState(false)
-  const [recurringError, setRecurringError] = useState(false)
+  const [type, setType] = useState<TransactionType>("Expense");
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [date, setDate] = useState<Date>(new Date());
+  const [category, setCategory] = useState<Category>("Other");
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [recurringTransactions, setRecurringTransactions] = useState<Transaction[]>([]);
+  const [selectedRecurring, setSelectedRecurring] = useState("new");
+  const [recurringLoading, setRecurringLoading] = useState(false);
+  const [recurringError, setRecurringError] = useState(false);
 
   // Pre-fill when editing; reset when opening for a new transaction
   useEffect(() => {
     if (open) {
       if (transaction) {
-        setType(transaction.type)
-        setAmount(String(transaction.amount))
-        setDescription(transaction.description)
-        setDate(new Date(transaction.date + "T00:00:00"))
-        setCategory(transaction.category)
-        setIsRecurring(transaction.is_recurring === 1)
+        setType(transaction.type);
+        setAmount(String(transaction.amount));
+        setDescription(transaction.description);
+        setDate(new Date(`${transaction.date  }T00:00:00`));
+        setCategory(transaction.category);
+        setIsRecurring(transaction.is_recurring === 1);
       } else {
-        setType("Expense")
-        setAmount("")
-        setDescription("")
-        setDate(new Date())
-        setCategory("Other")
-        setIsRecurring(false)
+        setType("Expense");
+        setAmount("");
+        setDescription("");
+        setDate(new Date());
+        setCategory("Other");
+        setIsRecurring(false);
       }
-      setErrors({})
-      setSelectedRecurring("new")
+      setErrors({});
+      setSelectedRecurring("new");
     }
-  }, [open, transaction])
+  }, [open, transaction]);
 
   useEffect(() => {
-    if (!open || isEditing) return
+    if (!open || isEditing) {return;}
 
-    const controller = new AbortController()
-    setRecurringTransactions([])
-    setRecurringLoading(true)
-    setRecurringError(false)
+    const controller = new AbortController();
+    setRecurringTransactions([]);
+    setRecurringLoading(true);
+    setRecurringError(false);
 
     async function loadRecurringTransactions() {
       try {
         const res = await fetch("/api/transactions/recurring", {
           signal: controller.signal,
           cache: "no-store",
-        })
-        if (!res.ok) throw new Error("Failed to fetch recurring transactions")
-        const data: Transaction[] = await res.json()
+        });
+        if (!res.ok) {throw new Error("Failed to fetch recurring transactions");}
+        const data: Transaction[] = await res.json();
         // Repeated occurrences with identical details need only one template.
-        const seen = new Set<string>()
+        const seen = new Set<string>();
         const templates = data.filter((tx) => {
-          const key = JSON.stringify([tx.type, tx.amount, tx.description, tx.category])
-          if (seen.has(key)) return false
-          seen.add(key)
-          return true
-        })
-        if (!controller.signal.aborted) setRecurringTransactions(templates)
+          const key = JSON.stringify([tx.type, tx.amount, tx.description, tx.category]);
+          if (seen.has(key)) {return false;}
+          seen.add(key);
+          return true;
+        });
+        if (!controller.signal.aborted) {setRecurringTransactions(templates);}
       } catch {
-        if (!controller.signal.aborted) setRecurringError(true)
+        if (!controller.signal.aborted) {setRecurringError(true);}
       } finally {
-        if (!controller.signal.aborted) setRecurringLoading(false)
+        if (!controller.signal.aborted) {setRecurringLoading(false);}
       }
     }
 
-    loadRecurringTransactions()
-    return () => controller.abort()
-  }, [open, isEditing])
+    loadRecurringTransactions();
+    return () => controller.abort();
+  }, [open, isEditing]);
 
   const handleRecurringChange = (value: string) => {
-    const template = recurringTransactions.find((tx) => String(tx.id) === value)
-    setSelectedRecurring(value)
-    setType(template?.type ?? "Expense")
-    setAmount(template ? String(template.amount) : "")
-    setDescription(template?.description ?? "")
-    setCategory(template?.category ?? "Other")
-    setIsRecurring(!!template)
-    setErrors({})
-  }
+    const template = recurringTransactions.find((tx) => String(tx.id) === value);
+    setSelectedRecurring(value);
+    setType(template?.type ?? "Expense");
+    setAmount(template ? String(template.amount) : "");
+    setDescription(template?.description ?? "");
+    setCategory(template?.category ?? "Other");
+    setIsRecurring(!!template);
+    setErrors({});
+  };
 
   const validate = (): boolean => {
-    const next: Record<string, string> = {}
-    const parsed = parseFloat(amount)
+    const next: Record<string, string> = {};
+    const parsed = parseFloat(amount);
     if (!amount || isNaN(parsed) || parsed <= 0) {
-      next.amount = "Enter a positive amount"
+      next.amount = "Enter a positive amount";
     } else if (!/^\d+(\.\d{1,2})?$/.test(amount.trim())) {
-      next.amount = "Maximum 2 decimal places"
+      next.amount = "Maximum 2 decimal places";
     }
     if (!description.trim()) {
-      next.description = "Description is required"
+      next.description = "Description is required";
     } else if (description.trim().length > 200) {
-      next.description = "Maximum 200 characters"
+      next.description = "Maximum 200 characters";
     }
-    setErrors(next)
-    return Object.keys(next).length === 0
-  }
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validate()) return
+    e.preventDefault();
+    if (!validate()) {return;}
 
-    setLoading(true)
+    setLoading(true);
     const body: TransactionInput = {
       type,
       amount: parseFloat(parseFloat(amount).toFixed(2)),
@@ -164,31 +164,31 @@ export function TransactionForm({
       date: formatDateInput(date),
       category,
       is_recurring: isRecurring,
-    }
+    };
 
     try {
       const url = isEditing
         ? `/api/transactions/${transaction!.id}`
-        : "/api/transactions"
+        : "/api/transactions";
       const res = await fetch(url, {
         method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
-      })
+      });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err?.error ?? `HTTP ${res.status}`)
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error ?? `HTTP ${res.status}`);
       }
-      toast.success(isEditing ? "Transaction updated" : "Transaction added")
-      onSuccess()
-      onOpenChange(false)
+      toast.success(isEditing ? "Transaction updated" : "Transaction added");
+      onSuccess();
+      onOpenChange(false);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong"
-      toast.error(msg)
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      toast.error(msg);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -331,8 +331,8 @@ export function TransactionForm({
                   selected={date}
                   onSelect={(d) => {
                     if (d) {
-                      setDate(d)
-                      setCalendarOpen(false)
+                      setDate(d);
+                      setCalendarOpen(false);
                     }
                   }}
                   initialFocus
@@ -398,5 +398,5 @@ export function TransactionForm({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -61,9 +61,9 @@ if (!fs.existsSync(DATA_DIR)) {
 // ──────────────────────────────────────────────
 function readAll(): Transaction[] {
   recoverPendingWrite();
-  if (!fs.existsSync(JSON_PATH)) return [];
+  if (!fs.existsSync(JSON_PATH)) {return [];}
   const transactions: unknown = JSON.parse(fs.readFileSync(JSON_PATH, "utf8"));
-  if (!Array.isArray(transactions)) throw new Error("Transaction storage must be an array.");
+  if (!Array.isArray(transactions)) {throw new Error("Transaction storage must be an array.");}
   return transactions as Transaction[];
 }
 
@@ -76,9 +76,9 @@ function syncDirectory(directory: string): void {
     const code = (error as NodeJS.ErrnoException).code;
     // Windows and some mounted filesystems cannot open/fsync directory handles.
     if (!["EINVAL", "ENOTSUP", "EOPNOTSUPP", "EBADF"].includes(code ?? "")
-      && !(process.platform === "win32" && ["EPERM", "EACCES", "EISDIR"].includes(code ?? ""))) throw error;
+      && !(process.platform === "win32" && ["EPERM", "EACCES", "EISDIR"].includes(code ?? ""))) {throw error;}
   } finally {
-    if (descriptor !== undefined) fs.closeSync(descriptor);
+    if (descriptor !== undefined) {fs.closeSync(descriptor);}
   }
 }
 
@@ -95,12 +95,12 @@ function writeJsonAtomically(filename: string, value: unknown): void {
     fs.renameSync(temporaryPath, filename);
     syncDirectory(path.dirname(filename));
   } finally {
-    if (fs.existsSync(temporaryPath)) fs.unlinkSync(temporaryPath);
+    if (fs.existsSync(temporaryPath)) {fs.unlinkSync(temporaryPath);}
   }
 }
 
 function recoverPendingWrite(): void {
-  if (!fs.existsSync(JOURNAL_PATH)) return;
+  if (!fs.existsSync(JOURNAL_PATH)) {return;}
   const journal = JSON.parse(fs.readFileSync(JOURNAL_PATH, "utf8")) as {
     transactions: Transaction[]; metadata: TransactionMetadata;
   };
@@ -112,7 +112,7 @@ function recoverPendingWrite(): void {
 
 function readMetadata(): TransactionMetadata {
   recoverPendingWrite();
-  if (!fs.existsSync(METADATA_PATH)) return { deletions: [], operations: [] };
+  if (!fs.existsSync(METADATA_PATH)) {return { deletions: [], operations: [] };}
   const metadata = JSON.parse(fs.readFileSync(METADATA_PATH, "utf8")) as TransactionMetadata;
   if (!Array.isArray(metadata.deletions) || !Array.isArray(metadata.operations)) {
     throw new Error("Transaction metadata is invalid.");
@@ -149,7 +149,7 @@ function nextId(transactions: Transaction[]): number {
   // Reserve IDs while Undo is available, even when the highest ID was deleted.
   const reserved = readMetadata().deletions.filter((entry) => !entry.restored).map((entry) => entry.transaction);
   const maximum = [...transactions, ...reserved].reduce((max, transaction) => Math.max(max, transaction.id), 0);
-  if (maximum >= Number.MAX_SAFE_INTEGER) throw new Error("Transaction ID range exhausted.");
+  if (maximum >= Number.MAX_SAFE_INTEGER) {throw new Error("Transaction ID range exhausted.");}
   return maximum + 1;
 }
 
@@ -177,13 +177,13 @@ export function getTransactions(
   let all = readAll();
 
   // Filtering
-  if (type && type !== "all") all = all.filter((t) => t.type === type);
-  if (dateFrom) all = all.filter((t) => t.date >= dateFrom);
-  if (dateTo) all = all.filter((t) => t.date <= dateTo);
-  if (minAmount !== undefined) all = all.filter((t) => t.amount >= minAmount);
-  if (maxAmount !== undefined) all = all.filter((t) => t.amount <= maxAmount);
+  if (type && type !== "all") {all = all.filter((t) => t.type === type);}
+  if (dateFrom) {all = all.filter((t) => t.date >= dateFrom);}
+  if (dateTo) {all = all.filter((t) => t.date <= dateTo);}
+  if (minAmount !== undefined) {all = all.filter((t) => t.amount >= minAmount);}
+  if (maxAmount !== undefined) {all = all.filter((t) => t.amount <= maxAmount);}
   if (category && category !== "all")
-    all = all.filter((t) => t.category === category);
+  {all = all.filter((t) => t.category === category);}
   if (search) {
     const q = search.toLowerCase();
     all = all.filter((t) => t.description.toLowerCase().includes(q));
@@ -200,10 +200,10 @@ export function getTransactions(
     const av = a[safeSort];
     const bv = b[safeSort];
     let cmp = 0;
-    if (typeof av === "number" && typeof bv === "number") cmp = av - bv;
-    else cmp = String(av).localeCompare(String(bv));
+    if (typeof av === "number" && typeof bv === "number") {cmp = av - bv;}
+    else {cmp = String(av).localeCompare(String(bv));}
     // Secondary sort: id DESC (matches original SQL behaviour)
-    if (cmp === 0) cmp = b.id - a.id;
+    if (cmp === 0) {cmp = b.id - a.id;}
     return asc ? cmp : -cmp;
   });
 
@@ -248,7 +248,7 @@ export function updateTransaction(
   input = validateTransactionInput(input);
   const all = readAll();
   const idx = all.findIndex((t) => t.id === id);
-  if (idx === -1) return null;
+  if (idx === -1) {return null;}
   all[idx] = {
     id,
     type: input.type,
@@ -283,8 +283,8 @@ export function deleteTransaction(id: number): { undoToken: string; undoExpiresA
 export function undoDeleteTransaction(token: string): Transaction {
   const metadata = readMetadata();
   const entry = metadata.deletions.find((item) => item.token === token);
-  if (!entry) throw new TransferValidationError("Undo has expired or this transaction was already restored.", 410);
-  if (entry.restored) return entry.transaction;
+  if (!entry) {throw new TransferValidationError("Undo has expired or this transaction was already restored.", 410);}
+  if (entry.restored) {return entry.transaction;}
   const all = readAll();
   if (all.some((transaction) => transaction.id === entry.transaction.id)) {
     throw new TransferValidationError("This ID is already in use. Undo will not overwrite an existing transaction.", 409);
@@ -299,7 +299,7 @@ export function importTransactions(inputs: TransactionInput[], skipDuplicates: b
   const metadata = readMetadata();
   const hash = operationHash({ transactions, skipDuplicates });
   const previous = previousOperation(metadata, operationId, "import", hash);
-  if (previous) return previous.result as ImportResult;
+  if (previous) {return previous.result as ImportResult;}
   const all = readAll();
   const seen = new Set(all.map(transactionFingerprint));
   let id = nextId(all);
@@ -311,7 +311,7 @@ export function importTransactions(inputs: TransactionInput[], skipDuplicates: b
       skipped++;
       continue;
     }
-    if (!Number.isSafeInteger(id)) throw new Error("Transaction ID range exhausted.");
+    if (!Number.isSafeInteger(id)) {throw new Error("Transaction ID range exhausted.");}
     all.push({ ...input, id: id++, is_recurring: input.is_recurring ? 1 : 0 });
     seen.add(key);
     imported++;
@@ -337,7 +337,7 @@ export function getRecoveryBackup(filename: string): SpendrBackup {
     throw new TransferValidationError("Invalid recovery filename.");
   }
   const recoveryPath = path.join(DATA_DIR, "backups", filename);
-  if (!fs.existsSync(recoveryPath)) throw new TransferValidationError("Recovery backup not found.", 404);
+  if (!fs.existsSync(recoveryPath)) {throw new TransferValidationError("Recovery backup not found.", 404);}
   return JSON.parse(fs.readFileSync(recoveryPath, "utf8")) as SpendrBackup;
 }
 
@@ -347,7 +347,7 @@ export function restoreBackup(backup: SpendrBackup, currentTheme: ThemePreferenc
   const metadata = readMetadata();
   const hash = operationHash({ backup: validated, currentTheme });
   const previous = previousOperation(metadata, operationId, "restore", hash);
-  if (previous) return previous.result as RestoreResult;
+  if (previous) {return previous.result as RestoreResult;}
   // Preserve even legacy records that fail the stricter import validator.
   const recovery: SpendrBackup = {
     app: "spendr", version: 1, createdAt: new Date().toISOString(),
@@ -396,12 +396,12 @@ export function getInsights(): Insights {
   // ── Monthly breakdown (last 12 months) ──
   const monthlyMap = new Map<string, { income: number; expenses: number }>();
   all.forEach((t) => {
-    const d = new Date(t.date + "T00:00:00");
+    const d = new Date(`${t.date  }T00:00:00`);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    if (!monthlyMap.has(key)) monthlyMap.set(key, { income: 0, expenses: 0 });
+    if (!monthlyMap.has(key)) {monthlyMap.set(key, { income: 0, expenses: 0 });}
     const entry = monthlyMap.get(key)!;
-    if (t.type === "Income") entry.income += t.amount;
-    else entry.expenses += t.amount;
+    if (t.type === "Income") {entry.income += t.amount;}
+    else {entry.expenses += t.amount;}
   });
 
   const monthlyData: MonthlyData[] = Array.from(monthlyMap.entries())
@@ -449,7 +449,7 @@ function buildCategoryData(
   const map = new Map<string, { amount: number; count: number }>();
   transactions.forEach((t) => {
     const cat = t.category ?? "Other";
-    if (!map.has(cat)) map.set(cat, { amount: 0, count: 0 });
+    if (!map.has(cat)) {map.set(cat, { amount: 0, count: 0 });}
     const entry = map.get(cat)!;
     entry.amount += t.amount;
     entry.count++;
@@ -474,6 +474,6 @@ function round2(n: number): number {
 
 export function getAllTransactionsForExport(type?: string): Transaction[] {
   const all = readAll().sort((a, b) => b.date.localeCompare(a.date));
-  if (type && type !== "all") return all.filter((t) => t.type === type);
+  if (type && type !== "all") {return all.filter((t) => t.type === type);}
   return all;
 }

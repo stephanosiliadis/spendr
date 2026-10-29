@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     console.error("[GET /api/transactions]", err);
     return NextResponse.json(
       { error: "Failed to fetch transactions" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -49,19 +49,19 @@ export async function POST(req: NextRequest) {
     if (!body.type || !["Income", "Expense"].includes(body.type)) {
       return NextResponse.json(
         { error: "type must be 'Income' or 'Expense'" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (!body.amount || body.amount <= 0) {
       return NextResponse.json(
         { error: "amount must be a positive number" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (!body.description?.trim()) {
       return NextResponse.json(
         { error: "description is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (!body.date) {
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     console.error("[POST /api/transactions]", err);
     return NextResponse.json(
       { error: "Failed to create transaction" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

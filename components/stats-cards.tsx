@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { Receipt, Scale, TrendingDown, TrendingUp } from "lucide-react"
+import { Receipt, Scale, TrendingDown, TrendingUp } from "lucide-react";
 
-import { Card } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import type { Insights } from "@/lib/types"
-import { cn, formatCurrency } from "@/lib/utils"
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { Insights } from "@/lib/types";
+import { cn, formatCurrency } from "@/lib/utils";
 
 interface StatsCardsProps {
   insights: Insights | null
@@ -28,10 +28,10 @@ export function StatsCards({ insights, loading }: StatsCardsProps) {
           </Card>
         ))}
       </div>
-    )
+    );
   }
 
-  const isPositive = insights.netBalance >= 0
+  const isPositive = insights.netBalance >= 0;
 
   const cards = [
     {
@@ -66,7 +66,7 @@ export function StatsCards({ insights, loading }: StatsCardsProps) {
       iconColor: "text-primary",
       valueColor: "text-foreground",
     },
-  ]
+  ];
 
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -79,7 +79,7 @@ export function StatsCards({ insights, loading }: StatsCardsProps) {
             <div
               className={cn(
                 "flex h-11 w-11 shrink-0 items-center justify-center rounded-full",
-                iconBg
+                iconBg,
               )}
             >
               <Icon className={cn("h-5 w-5", iconColor)} />
@@ -88,7 +88,7 @@ export function StatsCards({ insights, loading }: StatsCardsProps) {
               <p
                 className={cn(
                   "truncate text-xl font-bold leading-tight tracking-tight",
-                  valueColor
+                  valueColor,
                 )}
               >
                 {value}
@@ -99,5 +99,5 @@ export function StatsCards({ insights, loading }: StatsCardsProps) {
         </Card>
       ))}
     </div>
-  )
+  );
 }

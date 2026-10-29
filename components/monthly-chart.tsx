@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Bar,
@@ -10,12 +10,12 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from "recharts"
+} from "recharts";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import type { MonthlyData } from "@/lib/types"
-import { formatCurrency } from "@/lib/utils"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { MonthlyData } from "@/lib/types";
+import { formatCurrency } from "@/lib/utils";
 
 interface MonthlyChartProps {
   data: MonthlyData[]
@@ -31,7 +31,7 @@ function CustomTooltip({
   payload?: Array<{ name: string; value: number; color: string }>
   label?: string
 }) {
-  if (!active || !payload?.length) return null
+  if (!active || !payload?.length) {return null;}
 
   return (
     <div className="min-w-[180px] rounded-lg border border-border bg-card p-3 shadow-xl">
@@ -48,13 +48,13 @@ function CustomTooltip({
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 function yAxisFormatter(v: number): string {
-  const abs = Math.abs(v)
-  if (abs >= 1000) return `€${(v / 1000).toFixed(0)}k`
-  return `€${v}`
+  const abs = Math.abs(v);
+  if (abs >= 1000) {return `€${(v / 1000).toFixed(0)}k`;}
+  return `€${v}`;
 }
 
 export function MonthlyChart({ data, loading }: MonthlyChartProps) {
@@ -69,7 +69,7 @@ export function MonthlyChart({ data, loading }: MonthlyChartProps) {
           <Skeleton className="h-80 w-full rounded-lg" />
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (!data.length) {
@@ -83,7 +83,7 @@ export function MonthlyChart({ data, loading }: MonthlyChartProps) {
           <p className="text-sm text-muted-foreground">No monthly data yet</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -154,5 +154,5 @@ export function MonthlyChart({ data, loading }: MonthlyChartProps) {
         </ResponsiveContainer>
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { toast } from "sonner"
-import { Loader2, TriangleAlert } from "lucide-react"
+import { useState } from "react";
+import { toast } from "sonner";
+import { Loader2, TriangleAlert } from "lucide-react";
 
 import {
   AlertDialog,
@@ -13,10 +13,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Badge } from "@/components/ui/badge"
-import { cn, formatCurrency, formatDate } from "@/lib/utils"
-import { type Transaction } from "@/lib/types"
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { type Transaction } from "@/lib/types";
 
 interface DeleteDialogProps {
   open: boolean
@@ -31,66 +31,66 @@ export function DeleteDialog({
   transaction,
   onSuccess,
 }: DeleteDialogProps) {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
-    if (!transaction) return
-    setLoading(true)
+    if (!transaction) {return;}
+    setLoading(true);
     try {
       const res = await fetch(`/api/transactions/${transaction.id}`, {
         method: "DELETE",
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const { undoToken, undoExpiresAt } = await res.json()
-      let restoring = false
+      });
+      if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
+      const { undoToken, undoExpiresAt } = await res.json();
+      let restoring = false;
       const showUndo = () => {
-        const remaining = undoExpiresAt - Date.now()
-        if (remaining <= 0) return
+        const remaining = undoExpiresAt - Date.now();
+        if (remaining <= 0) {return;}
         toast.success("Transaction deleted", {
           duration: Math.min(15_000, remaining),
           description: "You can undo this deletion for up to one minute.",
           action: {
             label: "Undo",
             onClick: async () => {
-              if (restoring) return
-              restoring = true
+              if (restoring) {return;}
+              restoring = true;
               try {
                 const undoRes = await fetch("/api/transactions/undo", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ token: undoToken }),
-                })
+                });
                 if (!undoRes.ok) {
-                  const data = await undoRes.json().catch(() => ({}))
-                  throw new Error(data.error ?? "Could not restore transaction.")
+                  const data = await undoRes.json().catch(() => ({}));
+                  throw new Error(data.error ?? "Could not restore transaction.");
                 }
-                toast.success("Transaction restored")
-                onSuccess()
+                toast.success("Transaction restored");
+                onSuccess();
               } catch (error) {
-                onSuccess()
-                toast.error(error instanceof Error ? error.message : "Could not restore transaction.")
+                onSuccess();
+                toast.error(error instanceof Error ? error.message : "Could not restore transaction.");
                 // A failed request can be retried while the server-side token is valid.
-                showUndo()
+                showUndo();
               } finally {
-                restoring = false
+                restoring = false;
               }
             },
           },
-        })
-      }
-      showUndo()
-      onSuccess()
-      onOpenChange(false)
+        });
+      };
+      showUndo();
+      onSuccess();
+      onOpenChange(false);
     } catch {
-      toast.error("Failed to delete transaction. Please try again.")
+      toast.error("Failed to delete transaction. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  if (!transaction) return null
+  if (!transaction) {return null;}
 
-  const isIncome = transaction.type === "Income"
+  const isIncome = transaction.type === "Income";
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -117,7 +117,7 @@ export function DeleteDialog({
                 "text-xs font-semibold",
                 isIncome
                   ? "border-income/30 bg-income-muted text-income"
-                  : "border-expense/30 bg-expense-muted text-expense"
+                  : "border-expense/30 bg-expense-muted text-expense",
               )}
             >
               {transaction.type}
@@ -125,7 +125,7 @@ export function DeleteDialog({
             <span
               className={cn(
                 "text-base font-bold tabular-nums",
-                isIncome ? "text-income" : "text-expense"
+                isIncome ? "text-income" : "text-expense",
               )}
             >
               {isIncome ? "+" : "−"}
@@ -148,8 +148,8 @@ export function DeleteDialog({
           <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
-              e.preventDefault()
-              handleDelete()
+              e.preventDefault();
+              handleDelete();
             }}
             disabled={loading}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2"
@@ -160,5 +160,5 @@ export function DeleteDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }

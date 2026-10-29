@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { ArrowDownCircle, ArrowUpCircle, RefreshCw, Wallet } from "lucide-react"
+import { useEffect, useState } from "react";
+import { ArrowDownCircle, ArrowUpCircle, RefreshCw, Wallet } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CategoryChart } from "@/components/category-chart"
-import { MonthlyChart } from "@/components/monthly-chart"
-import { StatsCards } from "@/components/stats-cards"
-import type { CategoryData, Insights } from "@/lib/types"
-import { formatCurrency, formatDate } from "@/lib/utils"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CategoryChart } from "@/components/category-chart";
+import { MonthlyChart } from "@/components/monthly-chart";
+import { StatsCards } from "@/components/stats-cards";
+import type { CategoryData, Insights } from "@/lib/types";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 // ── Category list with progress bars ──────────────────────────────────────────
 
@@ -37,7 +37,7 @@ function CategoryList({
           </div>
         ))}
       </div>
-    )
+    );
   }
 
   if (!data.length) {
@@ -45,7 +45,7 @@ function CategoryList({
       <div className="flex h-40 items-center justify-center">
         <p className="text-sm text-muted-foreground">No data available</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -70,7 +70,7 @@ function CategoryList({
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 // ── Key insights section ───────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ function KeyInsights({
           </Card>
         ))}
       </div>
-    )
+    );
   }
 
   const items = [
@@ -141,7 +141,7 @@ function KeyInsights({
           ? "Recurring transaction"
           : "Recurring transactions",
     },
-  ]
+  ];
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -158,29 +158,29 @@ function KeyInsights({
         </Card>
       ))}
     </div>
-  )
+  );
 }
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function InsightsPage() {
-  const [insights, setInsights] = useState<Insights | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [insights, setInsights] = useState<Insights | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/api/insights")
-        const data = await res.json()
-        setInsights(res.ok ? data : null)
+        const res = await fetch("/api/insights");
+        const data = await res.json();
+        setInsights(res.ok ? data : null);
       } catch (err) {
-        console.error("Failed to load insights", err)
+        console.error("Failed to load insights", err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-    load()
-  }, [])
+    load();
+  }, []);
 
   return (
     <div className="flex flex-col gap-6 p-6 pt-20 lg:pt-6 animate-fade-in">
@@ -280,5 +280,5 @@ export default function InsightsPage() {
         <KeyInsights insights={insights} loading={loading} />
       </div>
     </div>
-  )
+  );
 }

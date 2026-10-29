@@ -1,33 +1,37 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
-import { Plus } from "lucide-react"
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { CategoryChart } from "@/components/category-chart"
-import { MonthlyChart } from "@/components/monthly-chart"
-import { StatsCards } from "@/components/stats-cards"
-import { TransactionForm } from "@/components/transaction-form"
-import type { Insights, Transaction } from "@/lib/types"
-import { cn, formatCurrency, formatDate } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CategoryChart } from "@/components/category-chart";
+import { MonthlyChart } from "@/components/monthly-chart";
+import { StatsCards } from "@/components/stats-cards";
+import { TransactionForm } from "@/components/transaction-form";
+import type { Insights, Transaction } from "@/lib/types";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
 
 function getGreeting(): string {
-  const hour = new Date().getHours()
-  if (hour < 12) return "Good morning"
-  if (hour < 17) return "Good afternoon"
-  return "Good evening"
+  const hour = new Date().getHours();
+  if (hour < 12) {
+    return "Good morning";
+  }
+  if (hour < 17) {
+    return "Good afternoon";
+  }
+  return "Good evening";
 }
 
 export default function DashboardPage() {
-  const [insights, setInsights] = useState<Insights | null>(null)
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [loading, setLoading] = useState(true)
-  const [formOpen, setFormOpen] = useState(false)
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [insights, setInsights] = useState<Insights | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -35,21 +39,21 @@ export default function DashboardPage() {
         const [insRes, txRes] = await Promise.all([
           fetch("/api/insights"),
           fetch("/api/transactions?limit=5&sort=date&order=desc"),
-        ])
+        ]);
         const [insData, txData] = await Promise.all([
           insRes.json(),
           txRes.json(),
-        ])
-        setInsights(insRes.ok ? insData : null)
-        setTransactions(txData.data ?? [])
+        ]);
+        setInsights(insRes.ok ? insData : null);
+        setTransactions(txData.data ?? []);
       } catch (err) {
-        console.error("Failed to load dashboard data", err)
+        console.error("Failed to load dashboard data", err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-    load()
-  }, [refreshKey])
+    load();
+  }, [refreshKey]);
 
   return (
     <div className="flex flex-col gap-6 p-6 pt-20 lg:pt-6 animate-fade-in">
@@ -58,7 +62,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold">{getGreeting()} 👋</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Here's your financial overview for today
+            Here&apos;s your financial overview for today
           </p>
         </div>
         <Button onClick={() => setFormOpen(true)}>
@@ -87,7 +91,10 @@ export default function DashboardPage() {
             Recent Transactions
           </CardTitle>
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/transactions" className="text-xs text-muted-foreground">
+            <Link
+              href="/transactions"
+              className="text-xs text-muted-foreground"
+            >
               View all →
             </Link>
           </Button>
@@ -111,7 +118,11 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 No transactions yet. Add one to get started!
               </p>
-              <Button size="sm" variant="outline" onClick={() => setFormOpen(true)}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setFormOpen(true)}
+              >
                 <Plus className="h-3.5 w-3.5" />
                 Add your first transaction
               </Button>
@@ -129,7 +140,7 @@ export default function DashboardPage() {
                       "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold",
                       tx.type === "Income"
                         ? "bg-income/15 text-income"
-                        : "bg-expense/15 text-expense"
+                        : "bg-expense/15 text-expense",
                     )}
                   >
                     {tx.type === "Income" ? "+" : "−"}
@@ -162,7 +173,7 @@ export default function DashboardPage() {
                   <p
                     className={cn(
                       "shrink-0 text-sm font-semibold tabular-nums",
-                      tx.type === "Income" ? "text-income" : "text-expense"
+                      tx.type === "Income" ? "text-income" : "text-expense",
                     )}
                   >
                     {tx.type === "Income" ? "+" : "−"}
@@ -181,5 +192,5 @@ export default function DashboardPage() {
         onSuccess={() => setRefreshKey((key) => key + 1)}
       />
     </div>
-  )
+  );
 }

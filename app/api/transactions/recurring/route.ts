@@ -10,7 +10,7 @@ export async function GET() {
     console.error("[GET /api/transactions/recurring]", err);
     return NextResponse.json(
       { error: "Failed to fetch recurring transactions" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

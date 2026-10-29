@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     const type = searchParams.get("type") ?? "all";
 
     const transactions = getAllTransactionsForExport(
-      type === "all" ? undefined : type
+      type === "all" ? undefined : type,
     );
 
     if (format === "csv") {
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
           t.date,
           t.category,
           t.is_recurring ? "Yes" : "No",
-        ].join(",")
+        ].join(","),
       );
       const csv = [header, ...rows].join("\n");
 
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
     console.error("[GET /api/export]", err);
     return NextResponse.json(
       { error: "Failed to export transactions" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

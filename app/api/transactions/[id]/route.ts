@@ -19,7 +19,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     if (!transaction) {
       return NextResponse.json(
         { error: "Transaction not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
     return NextResponse.json(transaction);
@@ -27,7 +27,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     console.error("[GET /api/transactions/:id]", err);
     return NextResponse.json(
       { error: "Failed to fetch transaction" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -44,19 +44,19 @@ export async function PUT(req: NextRequest, { params }: Params) {
     if (!body.type || !["Income", "Expense"].includes(body.type)) {
       return NextResponse.json(
         { error: "type must be 'Income' or 'Expense'" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (!body.amount || body.amount <= 0) {
       return NextResponse.json(
         { error: "amount must be a positive number" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (!body.description?.trim()) {
       return NextResponse.json(
         { error: "description is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (!body.date) {
@@ -67,7 +67,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     if (!updated) {
       return NextResponse.json(
         { error: "Transaction not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
     return NextResponse.json(updated);
@@ -78,7 +78,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     console.error("[PUT /api/transactions/:id]", err);
     return NextResponse.json(
       { error: "Failed to update transaction" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -93,7 +93,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     if (!deleted) {
       return NextResponse.json(
         { error: "Transaction not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
     return NextResponse.json({ success: true, ...deleted });
@@ -104,7 +104,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     console.error("[DELETE /api/transactions/:id]", err);
     return NextResponse.json(
       { error: "Failed to delete transaction" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

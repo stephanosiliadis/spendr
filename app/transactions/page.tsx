@@ -1,61 +1,61 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { DatabaseBackup, Download, FileJson, FileText, Plus, Upload } from "lucide-react"
+import { useState } from "react";
+import { DatabaseBackup, Download, FileJson, FileText, Plus, Upload } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { TransactionsTable } from "@/components/transactions-table"
-import { TransactionForm } from "@/components/transaction-form"
-import { DeleteDialog } from "@/components/delete-dialog"
-import { ImportDialog } from "@/components/import-dialog"
-import { BackupDialog } from "@/components/backup-dialog"
-import { type Transaction } from "@/lib/types"
+} from "@/components/ui/dropdown-menu";
+import { TransactionsTable } from "@/components/transactions-table";
+import { TransactionForm } from "@/components/transaction-form";
+import { DeleteDialog } from "@/components/delete-dialog";
+import { ImportDialog } from "@/components/import-dialog";
+import { BackupDialog } from "@/components/backup-dialog";
+import { type Transaction } from "@/lib/types";
 
 export default function TransactionsPage() {
   const [editingTransaction, setEditingTransaction] =
-    useState<Transaction | null>(null)
+    useState<Transaction | null>(null);
   const [deletingTransaction, setDeletingTransaction] =
-    useState<Transaction | null>(null)
-  const [formOpen, setFormOpen] = useState(false)
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [importOpen, setImportOpen] = useState(false)
-  const [backupOpen, setBackupOpen] = useState(false)
-  const [refreshKey, setRefreshKey] = useState(0)
+    useState<Transaction | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [backupOpen, setBackupOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleEdit = (tx: Transaction) => {
-    setEditingTransaction(tx)
-    setFormOpen(true)
-  }
+    setEditingTransaction(tx);
+    setFormOpen(true);
+  };
 
   const handleDelete = (tx: Transaction) => {
-    setDeletingTransaction(tx)
-    setDeleteOpen(true)
-  }
+    setDeletingTransaction(tx);
+    setDeleteOpen(true);
+  };
 
   const handleFormOpenChange = (open: boolean) => {
-    setFormOpen(open)
-    if (!open) setEditingTransaction(null)
-  }
+    setFormOpen(open);
+    if (!open) {setEditingTransaction(null);}
+  };
 
   const handleDeleteOpenChange = (open: boolean) => {
-    setDeleteOpen(open)
-    if (!open) setDeletingTransaction(null)
-  }
+    setDeleteOpen(open);
+    if (!open) {setDeletingTransaction(null);}
+  };
 
   const handleSuccess = () => {
-    setRefreshKey((k) => k + 1)
-  }
+    setRefreshKey((k) => k + 1);
+  };
 
   const exportAs = (format: "csv" | "json") => {
-    window.open(`/api/export?format=${format}`, "_blank")
-  }
+    window.open(`/api/export?format=${format}`, "_blank");
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -108,8 +108,8 @@ export default function TransactionsPage() {
               size="sm"
               className="gap-1.5"
               onClick={() => {
-                setEditingTransaction(null)
-                setFormOpen(true)
+                setEditingTransaction(null);
+                setFormOpen(true);
               }}
             >
               <Plus className="h-4 w-4" />
@@ -155,5 +155,5 @@ export default function TransactionsPage() {
         onSuccess={handleSuccess}
       />
     </div>
-  )
+  );
 }
