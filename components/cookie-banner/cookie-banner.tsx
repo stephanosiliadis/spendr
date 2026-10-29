@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 const COOKIE_CONSENT_KEY = "spendr.cookie.consent";
 
@@ -10,8 +9,6 @@ export type CookieConsent = "essential" | "accepted";
 
 function CookieBanner() {
   const [hasConsent, setHasConsent] = useState<CookieConsent>("essential");
-
-  const hasAccepted = hasConsent === "accepted";
 
   useEffect(() => {
     const stored = localStorage.getItem(COOKIE_CONSENT_KEY);

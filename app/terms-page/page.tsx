@@ -1,61 +1,58 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 
-function TermsContent() {
+function TermsPolicyContent() {
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold tracking-tight mb-6">Terms of Service</h1>
 
       <div className="prose max-w-none">
         <p>
-          These terms of service govern your use of the Spendr expense tracking
-          application. By accessing or using the service, you agree to these terms.
+          These terms of service govern your use of our application. By accessing
+          or using the application, you agree to be bound by these terms of
+          service.
         </p>
       </div>
 
-      <h2 className="text-2xl font-semibold tracking-tight mb-4">Acceptance of Terms</h2>
+      <h2 className="text-2xl font-semibold tracking-tight mb-4">Account</h2>
       <p>
-        By visiting, accessing, or using the Spendr application, you accept these
-        terms and conditions. If you do not agree with any part of the terms, you
-        may not access the service.
+        When you create an account on our application, you must provide accurate
+        and complete information. You are responsible for maintaining the
+        security of your account password.
       </p>
 
-      <h2 className="text-2xl font-semibold tracking-tight mb-4">User Conduct</h2>
+      <h2 className="text-2xl font-semibold tracking-tight mb-4">Purchases</h2>
       <p>
-        Users agree to use the service lawfully and responsibly. You are solely
-        responsible for any content you submit, post, or display on the service.
-      </p>
-
-      <h2 className="text-2xl font-semibold tracking-tight mb-4">Privacy</h2>
-      <p>
-        Our privacy policy explains how we handle your information. Please review
-        it alongside these terms.
+        If the application offers purchasing functionality, you must provide
+        accurate and complete billing information. You must be at least 18 years
+        old to make purchases.
       </p>
 
       <h2 className="text-2xl font-semibold tracking-tight mb-4">Termination</h2>
       <p>
-        We may terminate or suspend your account immediately, without prior notice,
-        for reasons including but not limited to breach of these terms.
+        We may terminate or suspend your account immediately, without prior notice
+        or liability, for any reason whatsoever, including violation of these
+        terms of service.
       </p>
 
-      <h2 className="text-2xl font-semibold tracking-tight mb-4">Changes to Terms</h2>
+      <h2 className="text-2xl font-semibold tracking-tight mb-4">Miscellaneous</h2>
       <p>
-        We reserve the right to modify these terms at any time. Changes will be
-        effective when posted on this page.
+        These terms of service shall be governed by the laws of your
+        jurisdiction, without regard to its conflict of law provisions. Our
+        failure to exercise or enforce any right or provision of these terms
+        shall not operate as a waiver of such right or provision.
       </p>
     </div>
   );
 }
 
-export default function TermsPage() {
+export default function TermsPolicyPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -92,7 +89,7 @@ export default function TermsPage() {
             </Button>
           </CardHeader>
           <CardContent>
-            <TermsContent />
+            <TermsPolicyContent />
           </CardContent>
         </Card>
       </main>

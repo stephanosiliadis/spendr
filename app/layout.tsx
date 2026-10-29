@@ -29,8 +29,9 @@ export default function RootLayout({
         >
           <div className="flex min-h-screen">
             <Sidebar />
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <main className="flex-1 flex flex-col min-w-0 overflow-hidden pt-4">
               {children}
+              <CookieBanner />
             </main>
           </div>
           <Toaster position="bottom-right" richColors closeButton />

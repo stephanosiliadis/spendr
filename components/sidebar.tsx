@@ -46,14 +46,14 @@ function NavItem({
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
         isActive
-          ? "bg-primary/15 text-primary"
+          ? "bg-secondary/15 text-secondary"
           : "text-muted-foreground hover:bg-accent hover:text-foreground",
       )}
     >
       <Icon
         className={cn(
           "h-5 w-5 shrink-0 transition-colors",
-          isActive ? "text-primary" : "",
+          isActive ? "text-secondary" : "",
         )}
       />
       {label}
@@ -66,10 +66,10 @@ function SidebarBody({ onNavClick }: { onNavClick?: () => void }) {
     <>
       {/* Logo */}
       <div className="flex items-center gap-3 border-b border-border px-5 py-5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/20">
-          <Wallet className="h-5 w-5 text-primary" />
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary/15">
+          <Wallet className="h-5 w-5 text-secondary" />
         </div>
-<span className="font-xl font-bold text-primary">
+        <span className="font-xl font-bold text-secondary">
                 Spendr
               </span>
       </div>
@@ -125,8 +125,8 @@ export function Sidebar() {
         </button>
 
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/20">
-            <Wallet className="h-4 w-4 text-primary" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary/15">
+            <Wallet className="h-4 w-4 text-secondary" />
           </div>
           <span className="font-semibold">{currentPage}</span>
         </div>
@@ -144,10 +144,10 @@ export function Sidebar() {
             {/* Drawer header */}
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/20">
-                  <Wallet className="h-4 w-4 text-primary" />
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary/15">
+                  <Wallet className="h-4 w-4 text-secondary" />
                 </div>
-                <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text font-bold text-transparent">
+                <span className="font-bold text-secondary">
                   Spendr
                 </span>
               </div>

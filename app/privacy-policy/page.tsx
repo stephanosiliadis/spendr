@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 
 function PrivacyPolicyContent() {
   return (
@@ -45,7 +43,7 @@ function PrivacyPolicyContent() {
         settings.
       </p>
 
-      <h2 className="text-2xl font-semibold tracking-tight mb-4">Children's Privacy</h2>
+      <h2 className="text-2xl font-semibold tracking-tight mb-4">Children Privacy</h2>
       <p>
         Our service is not directed to children under the age of 13.
       </p>
