@@ -8,6 +8,8 @@ import {
   BarChart3,
   LayoutDashboard,
   Menu,
+  FileText,
+  Shield,
   Wallet,
   X,
 } from "lucide-react";
@@ -19,6 +21,8 @@ const navLinks = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/transactions", icon: ArrowLeftRight, label: "Transactions" },
   { href: "/insights", icon: BarChart3, label: "Analytics" },
+  { href: "/privacy-policy", icon: Shield, label: "Privacy Policy" },
+  { href: "/terms-page", icon: FileText, label: "Terms" },
 ] as const;
 
 function NavItem({
@@ -65,9 +69,9 @@ function SidebarBody({ onNavClick }: { onNavClick?: () => void }) {
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/20">
           <Wallet className="h-5 w-5 text-primary" />
         </div>
-        <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-xl font-bold text-transparent">
-          Spendr
-        </span>
+<span className="font-xl font-bold text-primary">
+                Spendr
+              </span>
       </div>
 
       {/* Navigation */}
