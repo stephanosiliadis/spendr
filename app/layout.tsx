@@ -21,8 +21,8 @@ export const metadata: Metadata = {
   title: "Spendr — Smart Expense Tracker",
   description: "Track your income and expenses with beautiful insights.",
   icons: {
-    icon: "/Spendr%20Logo.png",
-    apple: "/Spendr%20Logo.png",
+    icon: "/spendr-favicon.png",
+    apple: "/spendr-favicon.png",
   },
 };
 
