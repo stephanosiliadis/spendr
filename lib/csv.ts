@@ -2,7 +2,7 @@ import { MAX_TRANSFER_TRANSACTIONS, isCalendarDate, validateTransactionInput } f
 import { CATEGORIES, type TransactionInput } from "./types";
 
 export const MAX_CSV_BYTES = 5 * 1024 * 1024;
-export const CSV_FIELDS = ["type", "amount", "description", "date", "category", "recurring"] as const;
+export const CSV_FIELDS = ["type", "amount", "description", "date", "category", "recurring", "splits"] as const;
 export type CsvField = (typeof CSV_FIELDS)[number]
 export type CsvDelimiter = "," | ";"
 export type CsvMapping = Record<CsvField, number | null>
@@ -139,7 +139,9 @@ export function defaultCsvMapping(headers: readonly string[]): CsvMapping {
   const normalized = headers.map((header) => header.replace(/^\uFEFF/, "").trim().toLowerCase().replace(/[\s_-]+/g, ""));
   const mapping = {} as CsvMapping;
   for (const field of CSV_FIELDS) {
-    const index = normalized.findIndex((header) => header === field || (field === "recurring" && header === "isrecurring"));
+    const index = normalized.findIndex((header) => header === field
+      || (field === "recurring" && header === "isrecurring")
+      || (field === "splits" && header === "split"));
     mapping[field] = index < 0 ? null : index;
   }
   return mapping;
@@ -184,6 +186,15 @@ export function buildCsvTransactions(csv: ParsedCsv, mapping: CsvMapping = defau
         ? CATEGORIES.find((category) => category.toLowerCase() === categoryValue.toLowerCase())
         : "Other";
       if (!category) {throw new Error(`Unknown category: ${categoryValue}. Use a Spendr category or leave Category unmapped for Other.`);}
+      const splitsValue = cell("splits");
+      let splits: unknown;
+      if (splitsValue) {
+        try {
+          splits = JSON.parse(splitsValue);
+        } catch {
+          throw new Error("Splits must be valid JSON from a Spendr CSV export.");
+        }
+      }
       const recurring = cell("recurring").toLowerCase();
       if (!["", "yes", "no", "true", "false", "1", "0"].includes(recurring)) {
         throw new Error("Recurring must be yes/no, true/false, or 1/0 (or blank).");
@@ -195,6 +206,7 @@ export function buildCsvTransactions(csv: ParsedCsv, mapping: CsvMapping = defau
         date,
         category,
         is_recurring: ["yes", "true", "1"].includes(recurring),
+        ...(splits === undefined ? {} : { splits }),
       }));
     } catch (error) {
       result.errors.push({ row: csv.rowNumbers[index] ?? index + 2, message: error instanceof Error ? error.message : "Invalid transaction." });

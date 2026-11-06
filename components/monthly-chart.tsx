@@ -130,14 +130,14 @@ export function MonthlyChart({ data, loading }: MonthlyChartProps) {
             <Bar
               dataKey="income"
               name="Income"
-              fill="#22c55e"
+              fill="hsl(var(--income))"
               radius={[4, 4, 0, 0]}
               maxBarSize={36}
             />
             <Bar
               dataKey="expenses"
               name="Expenses"
-              fill="#ef4444"
+              fill="hsl(var(--expense))"
               radius={[4, 4, 0, 0]}
               maxBarSize={36}
             />
@@ -145,9 +145,9 @@ export function MonthlyChart({ data, loading }: MonthlyChartProps) {
               type="monotone"
               dataKey="net"
               name="Net"
-              stroke="#a855f7"
+              stroke="hsl(var(--accent))"
               strokeWidth={2.5}
-              dot={{ r: 3.5, fill: "#a855f7", strokeWidth: 0 }}
+              dot={{ r: 3.5, fill: "hsl(var(--accent))", strokeWidth: 0 }}
               activeDot={{ r: 5, strokeWidth: 0 }}
             />
           </ComposedChart>

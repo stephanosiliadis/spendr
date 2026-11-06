@@ -155,15 +155,15 @@ export default function DashboardPage() {
                       <span>{formatDate(tx.date)}</span>
                       <span>·</span>
                       <Badge
-                        variant="secondary"
-                        className="rounded-full px-1.5 py-0 text-[10px] font-normal"
+                        variant="outline"
+                        className="rounded-full border-border bg-muted px-1.5 py-0 text-[10px] font-normal text-muted-foreground"
                       >
-                        {tx.category}
+                        {tx.splits?.length ? `Split · ${tx.splits.length} categories` : tx.category}
                       </Badge>
                       {tx.is_recurring === 1 && (
                         <>
                           <span>·</span>
-                          <span className="text-primary">Recurring</span>
+                          <span className="text-accent">Recurring</span>
                         </>
                       )}
                     </p>

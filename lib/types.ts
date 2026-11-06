@@ -17,19 +17,30 @@ export const CATEGORIES = [
 
 export type Category = (typeof CATEGORIES)[number];
 
+export interface CategoryBudget {
+  category: Category;
+  monthlyLimit: number;
+}
+
+export interface CategoryBudgetStatus extends CategoryBudget {
+  spent: number;
+  remaining: number;
+  percentage: number;
+}
+
 export const CATEGORY_COLORS: Record<Category, string> = {
-  "Food & Dining": "#f97316",
-  Transport: "#3b82f6",
-  Entertainment: "#a855f7",
-  "Health & Medical": "#ef4444",
-  Shopping: "#ec4899",
-  "Bills & Utilities": "#eab308",
-  Salary: "#22c55e",
-  Investment: "#06b6d4",
-  Housing: "#64748b",
-  Education: "#8b5cf6",
-  Travel: "#14b8a6",
-  Other: "#94a3b8",
+  "Food & Dining": "#c4774f",
+  Transport: "#557da5",
+  Entertainment: "#8572a4",
+  "Health & Medical": "#bd6262",
+  Shopping: "#ad6881",
+  "Bills & Utilities": "#a98a45",
+  Salary: "#528565",
+  Investment: "#4e8992",
+  Housing: "#687789",
+  Education: "#697ba3",
+  Travel: "#4e8b7e",
+  Other: "#8290a1",
 };
 
 export interface Transaction {
@@ -40,6 +51,12 @@ export interface Transaction {
   date: string; // YYYY-MM-DD
   category: Category;
   is_recurring: number; // 0 | 1 (SQLite boolean)
+  splits?: TransactionSplit[];
+}
+
+export interface TransactionSplit {
+  category: Category;
+  amount: number;
 }
 
 export interface TransactionInput {
@@ -49,6 +66,21 @@ export interface TransactionInput {
   date: string;
   category: Category;
   is_recurring?: boolean;
+  splits?: TransactionSplit[];
+}
+
+export interface CategoryRule {
+  id: string;
+  matchText: string;
+  category: Category;
+}
+
+export interface SavingsGoal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate?: string;
 }
 
 export interface MonthlyData {

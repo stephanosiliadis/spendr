@@ -1,4 +1,4 @@
-import { CATEGORIES, type Category, type Transaction, type TransactionInput } from "./types";
+import { CATEGORIES, type Category, type CategoryBudget, type CategoryRule, type SavingsGoal, type Transaction, type TransactionInput, type TransactionSplit } from "./types";
 
 export const MAX_TRANSFER_TRANSACTIONS = 10_000;
 export const MAX_TRANSFER_BYTES = 5 * 1024 * 1024;
@@ -15,6 +15,9 @@ export interface SpendrBackup {
   createdAt: string
   settings: { theme: ThemePreference }
   transactions: Transaction[]
+  budgets?: CategoryBudget[]
+  categoryRules?: CategoryRule[]
+  savingsGoals?: SavingsGoal[]
 }
 
 export class TransferValidationError extends Error {
@@ -45,6 +48,35 @@ export function isCalendarDate(value: unknown): value is string {
   return day <= days[month - 1];
 }
 
+function validateSplits(value: unknown, total: number, type: string, label: string): TransactionSplit[] | undefined {
+  if (value === undefined) {return undefined;}
+  if (type !== "Expense") {return invalid(`${label}: only expenses can be split.`);}
+  if (!Number.isSafeInteger(Math.round(total * 100)) || Math.round(total * 100) / 100 !== total) {
+    return invalid(`${label}: split totals require a transaction amount with up to two decimals.`);
+  }
+  if (!Array.isArray(value) || value.length < 2 || value.length > CATEGORIES.length) {
+    return invalid(`${label}: provide between 2 and ${CATEGORIES.length} allocations.`);
+  }
+  const seen = new Set<string>();
+  let cents = 0;
+  const splits = value.map((row, index): TransactionSplit => {
+    if (!isRecord(row) || typeof row.category !== "string" || !CATEGORIES.includes(row.category as Category)) {
+      return invalid(`${label}, allocation ${index + 1}: choose a valid category.`);
+    }
+    if (seen.has(row.category)) {return invalid(`${label}: split categories must be unique.`);}
+    if (typeof row.amount !== "number" || !Number.isFinite(row.amount) || row.amount <= 0
+      || !Number.isSafeInteger(Math.round(row.amount * 100))
+      || Math.round(row.amount * 100) / 100 !== row.amount) {
+      return invalid(`${label}, allocation ${index + 1}: enter a positive amount with up to two decimals.`);
+    }
+    seen.add(row.category);
+    cents += Math.round(row.amount * 100);
+    return { category: row.category as Category, amount: row.amount };
+  });
+  if (cents !== Math.round(total * 100)) {return invalid(`${label}: allocation amounts must add up to the transaction total.`);}
+  return splits;
+}
+
 export function validateTransactionInput(value: unknown): TransactionInput {
   if (!isRecord(value)) {return invalid("Each transaction must be an object.");}
   if (value.type !== "Income" && value.type !== "Expense") {return invalid("Type must be Income or Expense.");}
@@ -63,13 +95,15 @@ export function validateTransactionInput(value: unknown): TransactionInput {
   if (value.is_recurring !== undefined && typeof value.is_recurring !== "boolean") {
     return invalid("Recurring must be a boolean.");
   }
+  const splits = validateSplits(value.splits, value.amount, value.type, "Split transaction");
   return {
     type: value.type,
     amount: value.amount,
     description: value.description.trim(),
     date: value.date,
-    category: value.category as Category,
+    category: splits?.[0].category ?? value.category as Category,
     is_recurring: value.is_recurring === true,
+    ...(splits ? { splits } : {}),
   };
 }
 
@@ -118,19 +152,105 @@ export function validateBackup(value: unknown): SpendrBackup {
     if (typeof row.description !== "string" || !row.description.trim()) {return invalid(`Transaction ${index + 1}: invalid description.`);}
     if (!isCalendarDate(row.date)) {return invalid(`Transaction ${index + 1}: invalid calendar date.`);}
     if (typeof row.category !== "string" || !CATEGORIES.includes(row.category as Category)) {return invalid(`Transaction ${index + 1}: invalid category.`);}
+    const splits = validateSplits(row.splits, row.amount, row.type, `Transaction ${index + 1}`);
     ids.add(row.id);
     return {
       id: row.id, type: row.type, amount: row.amount, description: row.description,
-      date: row.date, category: row.category as Category, is_recurring: row.is_recurring,
+      date: row.date, category: splits?.[0].category ?? row.category as Category, is_recurring: row.is_recurring,
+      ...(splits ? { splits } : {}),
     };
   });
-  return { app: "spendr", version: 1, createdAt: value.createdAt, settings: { theme: value.settings.theme }, transactions };
+  let budgets: CategoryBudget[] | undefined;
+  if (value.budgets !== undefined) {
+    if (!Array.isArray(value.budgets)) {return invalid("Backup budgets must be an array.");}
+    const seenCategories = new Set<string>();
+    budgets = value.budgets.map((row, index): CategoryBudget => {
+      if (!isRecord(row) || typeof row.category !== "string" || !CATEGORIES.includes(row.category as Category)) {
+        return invalid(`Budget ${index + 1}: invalid category.`);
+      }
+      if (seenCategories.has(row.category)) {return invalid(`Budget ${index + 1}: duplicate category.`);}
+      if (typeof row.monthlyLimit !== "number" || !Number.isFinite(row.monthlyLimit)
+        || row.monthlyLimit <= 0 || Math.round(row.monthlyLimit * 100) / 100 !== row.monthlyLimit) {
+        return invalid(`Budget ${index + 1}: invalid monthly limit.`);
+      }
+      seenCategories.add(row.category);
+      return { category: row.category as Category, monthlyLimit: row.monthlyLimit };
+    });
+  }
+  let categoryRules: CategoryRule[] | undefined;
+  if (value.categoryRules !== undefined) {
+    if (!Array.isArray(value.categoryRules)) {return invalid("Backup category rules must be an array.");}
+    const ids = new Set<string>();
+    const phrases = new Set<string>();
+    categoryRules = value.categoryRules.map((row, index): CategoryRule => {
+      if (!isRecord(row)
+        || typeof row.id !== "string"
+        || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.id)) {
+        return invalid(`Category rule ${index + 1}: invalid ID.`);
+      }
+      if (ids.has(row.id)) {return invalid(`Category rule ${index + 1}: duplicate ID.`);}
+      if (typeof row.matchText !== "string" || !row.matchText.trim() || row.matchText.trim().length > 80) {
+        return invalid(`Category rule ${index + 1}: invalid matching phrase.`);
+      }
+      const phrase = row.matchText.trim().toLocaleLowerCase();
+      if (phrases.has(phrase)) {return invalid(`Category rule ${index + 1}: duplicate matching phrase.`);}
+      if (typeof row.category !== "string" || !CATEGORIES.includes(row.category as Category)) {
+        return invalid(`Category rule ${index + 1}: invalid category.`);
+      }
+      ids.add(row.id);
+      phrases.add(phrase);
+      return { id: row.id, matchText: row.matchText.trim(), category: row.category as Category };
+    });
+  }
+  let savingsGoals: SavingsGoal[] | undefined;
+  if (value.savingsGoals !== undefined) {
+    if (!Array.isArray(value.savingsGoals)) {return invalid("Backup savings goals must be an array.");}
+    const ids = new Set<string>();
+    savingsGoals = value.savingsGoals.map((row, index): SavingsGoal => {
+      if (!isRecord(row)
+        || typeof row.id !== "string"
+        || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.id)) {
+        return invalid(`Savings goal ${index + 1}: invalid ID.`);
+      }
+      if (ids.has(row.id)) {return invalid(`Savings goal ${index + 1}: duplicate ID.`);}
+      if (typeof row.name !== "string" || !row.name.trim() || row.name.trim().length > 80) {
+        return invalid(`Savings goal ${index + 1}: invalid name.`);
+      }
+      const validMoney = (amount: unknown, allowZero: boolean) => typeof amount === "number"
+        && Number.isFinite(amount)
+        && (allowZero ? amount >= 0 : amount > 0)
+        && Number.isSafeInteger(Math.round(amount * 100))
+        && Math.round(amount * 100) / 100 === amount;
+      if (!validMoney(row.targetAmount, false) || !validMoney(row.currentAmount, true)) {
+        return invalid(`Savings goal ${index + 1}: invalid amount.`);
+      }
+      if (row.targetDate !== undefined && !isCalendarDate(row.targetDate)) {
+        return invalid(`Savings goal ${index + 1}: invalid target date.`);
+      }
+      ids.add(row.id);
+      return {
+        id: row.id,
+        name: row.name.trim(),
+        targetAmount: row.targetAmount,
+        currentAmount: row.currentAmount,
+        ...(row.targetDate ? { targetDate: row.targetDate } : {}),
+      };
+    });
+  }
+  return {
+    app: "spendr", version: 1, createdAt: value.createdAt,
+    settings: { theme: value.settings.theme }, transactions,
+    ...(budgets === undefined ? {} : { budgets }),
+    ...(categoryRules === undefined ? {} : { categoryRules }),
+    ...(savingsGoals === undefined ? {} : { savingsGoals }),
+  };
 }
 
 /** Includes all user-entered fields, but not IDs assigned by Spendr. */
 export function transactionFingerprint(transaction: Transaction | TransactionInput): string {
-  return JSON.stringify([
+  const fields = [
     transaction.type, transaction.amount, transaction.description.trim(), transaction.date,
     transaction.category, !!transaction.is_recurring,
-  ]);
+  ];
+  return JSON.stringify(transaction.splits ? [...fields, transaction.splits] : fields);
 }

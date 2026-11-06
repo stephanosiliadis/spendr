@@ -1,22 +1,27 @@
 # Spendr Web
 
-A beautiful, full-featured expense tracker built with Next.js, Shadcn/ui, and Radix UI — the web evolution of the Spendr CLI.
+Spendr is a local-first personal finance dashboard for tracking income and expenses, reviewing trends, and managing category budgets and savings goals. It is built with Next.js, Shadcn/ui, and Radix UI.
+
+Current version: **1.1.0**
 
 ## Features
 
 | Feature | Details |
 |---|---|
-| **Dashboard** | Real-time stats cards, monthly income/expense bar chart, expense category donut chart, recent transactions |
-| **Transactions** | Full CRUD with searchable, filterable, paginated table; sort by any column |
-| **Analytics** | Tabbed insights — monthly trends, income/expense category breakdowns with progress bars, key stats |
-| **Categories** | 12 built-in categories (Food, Transport, Salary, Investment, etc.) with emoji decoration |
-| **Recurring transactions** | Reuse a recurring transaction's details when adding a new occurrence |
+| **Dashboard** | Income and expense totals, monthly chart, category breakdown, and recent transactions |
+| **Transactions** | Create, edit, delete, search, filter, sort, and paginate transactions; split expenses across categories |
+| **Analytics** | Monthly trends and category breakdowns, with custom date-range filtering |
+| **Budgets** | Set monthly category limits and track spending against each budget |
+| **Category rules** | Automatically categorize transactions based on matching description text |
+| **Savings goals** | Track progress toward named savings targets and optional target dates |
+| **Categories** | 12 built-in categories, including Food & Dining, Transport, Salary, and Investment |
+| **Recurring flag and templates** | Mark transactions as recurring and reuse their details when entering a new occurrence |
 | **Undo deletion** | Undo action visible for 15 seconds; server-side recovery window of one minute |
 | **CSV import** | Column mapping, preview and validation, optional duplicate skipping; accepts Spendr CSV exports |
 | **Export** | One-click CSV or JSON export (entire transaction history) |
-| **Backup & restore** | Versioned backup of all transactions and the browser's theme preference; confirmed replacement with an automatic recovery snapshot |
+| **Backup & restore** | Versioned backup of transactions, budgets, category rules, savings goals, and theme preference; confirmed replacement with a recovery snapshot |
 | **System / Light / Dark mode** | Theme menu in the sidebar and mobile header; defaults to System and remembers explicit choices |
-| **Local storage** | JSON transaction file with atomic, recoverable writes |
+| **Local storage** | JSON files with atomic, recoverable writes |
 
 ## Stack
 
@@ -53,6 +58,7 @@ DATA_DIR=/absolute/path/to/your/data
 - `transactions.json` stores the active transactions.
 - `transaction-meta.json` stores short-lived Undo records and import/restore retry receipts.
 - `transaction-journal.json` exists during a write; the next storage operation completes an interrupted commit. Do not delete it manually. Files are flushed before replacement; directory metadata is also flushed where the operating system/filesystem supports it.
+- `category-budgets.json`, `category-rules.json`, and `savings-goals.json` store budget limits, description matching rules, and savings targets.
 - `backups/pre-restore-*.json` preserves the previous transactions and theme before a restore. These recovery files and metadata are excluded from Git.
 
 The JSON store is intended for one running server instance. It is not a multi-process database. The app has no authentication; run it locally or behind access controls, and keep backups private.
@@ -66,9 +72,9 @@ Open **Transactions → Data** for CSV import, existing exports, and backup/rest
 Select a comma- or semicolon-separated, header-first CSV, then review column mapping and the preview. Spendr export headers map automatically; imported IDs are ignored and new IDs are assigned.
 
 - Required columns: Type, Amount, Description, Date.
-- Optional columns: Category (defaults to Other), Recurring (defaults to No).
+- Optional columns: Category (defaults to Other), Recurring (defaults to No), and Splits (JSON allocation data from a Spendr CSV export).
 - Dates: valid `YYYY-MM-DD`; types: Income or Expense; amounts: positive, decimal point, at most two decimal places.
-- Categories must match a built-in Spendr category. Recurring accepts yes/no, true/false, or 1/0.
+- Categories must match a built-in Spendr category. Recurring accepts yes/no, true/false, or 1/0. Splits are supported for expenses and must total the transaction amount.
 - Quoted commas, escaped quotes, multiline descriptions, UTF-8 BOM, and CRLF are supported.
 - Any invalid row blocks the whole import. Limits: 5 MiB and 10,000 transactions per CSV.
 - Duplicate skipping is enabled by default and compares type, amount, trimmed description, date, category, and recurring status. It covers both existing entries and repeated rows within the file; disable it to intentionally import identical entries.
@@ -76,7 +82,7 @@ Select a comma- or semicolon-separated, header-first CSV, then review column map
 
 ### Backup and restore
 
-**Download backup** includes the complete active transaction dataset (not just a table page), original IDs and recurring flags, schema version, creation date, and the current browser's theme preference. Theme is the only user preference currently stored by the app. Ordinary transaction JSON exports are not full backup files.
+**Download backup** includes the complete active transaction dataset (not just a table page), original IDs and recurring flags, category splits, budgets, category rules, savings goals, schema version, creation date, and the current browser's theme preference. Ordinary transaction JSON exports are not full backup files.
 
 Restore validates the entire backup first, then requires explicit confirmation to **replace** existing transactions and apply the saved theme. To append data, use CSV import instead. An empty backup can intentionally clear the active dataset. Limits are 100,000 active transactions and 100 MiB per backup; writes cannot grow the dataset beyond the supported backup limits.
 
@@ -108,5 +114,8 @@ Tests use temporary data directories and never modify the application's transact
 | `POST` | `/api/import` | Import `{ transactions, skipDuplicates, operationId }`; UUID operation ID makes retries safe |
 | `GET` | `/api/backup?theme=system\|light\|dark` | Download a complete version 1 backup |
 | `POST` | `/api/backup` | Restore `{ backup, confirm: true, currentTheme, operationId }`; returns recovery filename and saved settings |
-| `GET` | `/api/insights` | Aggregated stats and chart data |
+| `GET` | `/api/insights?dateFrom=YYYY-MM-DD&dateTo=YYYY-MM-DD` | Aggregated stats and chart data, optionally filtered by date range |
 | `GET` | `/api/export?format=csv\|json` | Download all transactions |
+| `GET`, `PUT` | `/api/budgets?month=YYYY-MM` | Read monthly budget status or replace category budgets |
+| `GET`, `POST`, `DELETE` | `/api/category-rules` | List, add, or remove description matching rules (`DELETE` uses `?id=`) |
+| `GET`, `POST`, `PATCH`, `DELETE` | `/api/savings-goals` | List, create, update progress, or remove savings goals |

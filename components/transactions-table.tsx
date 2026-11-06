@@ -108,8 +108,8 @@ const DEFAULT_FILTERS: Filters = {
 function SortIcon({ col, active, order }: { col: SortCol; active: SortCol; order: SortOrder }) {
   if (active !== col) {return <ArrowUpDown className="h-3 w-3 opacity-40" />;}
   return order === "asc"
-    ? <ArrowUp className="h-3 w-3 text-primary" />
-    : <ArrowDown className="h-3 w-3 text-primary" />;
+    ? <ArrowUp className="h-3 w-3 text-accent" />
+    : <ArrowDown className="h-3 w-3 text-accent" />;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -473,11 +473,14 @@ export function TransactionsTable({
 
                     {/* Category pill */}
                     <TableCell>
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                      <span
+                        title={tx.splits?.map((split) => `${split.category}: ${formatCurrency(split.amount)}`).join(" · ")}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground"
+                      >
                         <span className="leading-none">
                           {CATEGORY_EMOJI[tx.category] ?? "📦"}
                         </span>
-                        {tx.category}
+                        {tx.splits?.length ? `Split · ${tx.splits.length} categories` : tx.category}
                       </span>
                     </TableCell>
 
@@ -492,7 +495,7 @@ export function TransactionsTable({
                         <TooltipProvider delayDuration={400}>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <RefreshCw className="h-3.5 w-3.5 text-primary mx-auto" />
+                              <RefreshCw className="h-3.5 w-3.5 text-accent mx-auto" />
                             </TooltipTrigger>
                             <TooltipContent>Recurring</TooltipContent>
                           </Tooltip>

@@ -278,7 +278,7 @@ export function BackupDialog({
           <DialogTitle>Backup &amp; restore</DialogTitle>
           <DialogDescription>
             Back up all transactions, including recurring flags and IDs,
-            together with this browser&apos;s theme preference.
+            this browser&apos;s theme preference, budgets, category rules, and savings goals.
           </DialogDescription>
         </DialogHeader>
 
@@ -374,8 +374,8 @@ export function BackupDialog({
                     className="mt-1 h-4 w-4 shrink-0 accent-primary"
                   />
                   <span>
-                    I understand this will replace all current transactions and
-                    restore the saved theme.
+                    I understand this will replace current transactions,
+                    budgets, category rules, savings goals, and the saved theme.
                   </span>
                 </label>
               </div>

@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDownCircle, ArrowUpCircle, RefreshCw, Wallet } from "lucide-react";
+import { endOfMonth, endOfYear, format, isSameMonth, isSameYear, startOfMonth, startOfYear } from "date-fns";
+import { type DateRange } from "react-day-picker";
+import { ArrowDownCircle, ArrowUpCircle, CalendarDays, RefreshCw, Wallet } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -125,16 +130,16 @@ function KeyInsights({
     {
       label: "Average Amount",
       icon: Wallet,
-      iconClass: "text-primary",
-      bgClass: "bg-primary/15",
+      iconClass: "text-accent",
+      bgClass: "bg-accent/15",
       value: formatCurrency(insights.averageAmount),
       sub: `Across ${insights.transactionCount} transaction${insights.transactionCount !== 1 ? "s" : ""}`,
     },
     {
       label: "Recurring",
       icon: RefreshCw,
-      iconClass: "text-amber-500",
-      bgClass: "bg-amber-500/15",
+      iconClass: "text-accent",
+      bgClass: "bg-accent/15",
       value: `${insights.recurringCount}`,
       sub:
         insights.recurringCount === 1
@@ -166,21 +171,56 @@ function KeyInsights({
 export default function InsightsPage() {
   const [insights, setInsights] = useState<Insights | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [draftRange, setDraftRange] = useState<DateRange | undefined>();
+  const [rangeOpen, setRangeOpen] = useState(false);
+  const dateFrom = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : "";
+  const dateTo = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : "";
 
   useEffect(() => {
+    const controller = new AbortController();
     async function load() {
+      setLoading(true);
       try {
-        const res = await fetch("/api/insights");
+        const query = new URLSearchParams();
+        if (dateFrom && dateTo) {
+          query.set("dateFrom", dateFrom);
+          query.set("dateTo", dateTo);
+        }
+        const queryString = query.toString();
+        const res = await fetch(`/api/insights${queryString ? `?${queryString}` : ""}`, {
+          signal: controller.signal,
+        });
         const data = await res.json();
         setInsights(res.ok ? data : null);
       } catch (err) {
-        console.error("Failed to load insights", err);
+        if (!controller.signal.aborted) {console.error("Failed to load insights", err);}
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {setLoading(false);}
       }
     }
     load();
-  }, []);
+    return () => controller.abort();
+  }, [dateFrom, dateTo]);
+
+  const now = new Date();
+  const isCurrentMonth = dateRange?.from && dateRange.to
+    && isSameMonth(dateRange.from, now)
+    && isSameMonth(dateRange.to, now)
+    && dateRange.from.getDate() === 1
+    && dateRange.to.getDate() === endOfMonth(now).getDate();
+  const isCurrentYear = dateRange?.from && dateRange.to
+    && isSameYear(dateRange.from, now)
+    && isSameYear(dateRange.to, now)
+    && dateRange.from.getMonth() === 0
+    && dateRange.from.getDate() === 1
+    && dateRange.to.getMonth() === 11
+    && dateRange.to.getDate() === 31;
+  const rangeLabel = dateRange?.from && dateRange.to
+    ? dateRange.from.getTime() === dateRange.to.getTime()
+      ? format(dateRange.from, "MMM d, yyyy")
+      : `${format(dateRange.from, "MMM d, yyyy")} – ${format(dateRange.to, "MMM d, yyyy")}`
+    : "Choose dates";
 
   return (
     <div className="flex flex-col gap-6 p-6 pt-20 lg:pt-6 animate-fade-in">
@@ -191,6 +231,89 @@ export default function InsightsPage() {
           Deep dive into your spending patterns and financial trends
         </p>
       </div>
+
+      <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 text-accent">
+            <CalendarDays className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold">Analytics period</p>
+            <p className="text-xs text-muted-foreground">
+              {dateRange?.from && dateRange.to ? rangeLabel : "All available transactions"}
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant={!dateRange ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => setDateRange(undefined)}
+          >
+            All time
+          </Button>
+          <Button
+            variant={isCurrentMonth ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => setDateRange({ from: startOfMonth(now), to: endOfMonth(now) })}
+          >
+            This month
+          </Button>
+          <Button
+            variant={isCurrentYear ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => setDateRange({ from: startOfYear(now), to: endOfYear(now) })}
+          >
+            This year
+          </Button>
+          <Popover
+            open={rangeOpen}
+            onOpenChange={(open) => {
+              setRangeOpen(open);
+              if (open) {setDraftRange(dateRange);}
+            }}
+          >
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="min-w-36 justify-start">
+                <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                {rangeLabel}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-auto p-0">
+              <Calendar
+                mode="range"
+                selected={draftRange}
+                onSelect={setDraftRange}
+                numberOfMonths={1}
+                initialFocus
+              />
+              <div className="flex items-center justify-between border-t border-border p-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setDraftRange(undefined);
+                    setDateRange(undefined);
+                    setRangeOpen(false);
+                  }}
+                >
+                  Clear
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={!draftRange?.from || !draftRange.to}
+                  onClick={() => {
+                    setDateRange(draftRange);
+                    setRangeOpen(false);
+                  }}
+                >
+                  Apply range
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </Card>
 
       {/* ── Tabs ────────────────────────────────────────────────────── */}
       <Tabs defaultValue="overview">

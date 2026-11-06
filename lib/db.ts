@@ -21,6 +21,11 @@ import type {
   Insights,
   MonthlyData,
   CategoryData,
+  Category,
+  CategoryBudget,
+  CategoryBudgetStatus,
+  CategoryRule,
+  SavingsGoal,
 } from "./types";
 
 // ──────────────────────────────────────────────
@@ -30,6 +35,9 @@ const DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), "data");
 const JSON_PATH = path.join(DATA_DIR, "transactions.json");
 const METADATA_PATH = path.join(DATA_DIR, "transaction-meta.json");
 const JOURNAL_PATH = path.join(DATA_DIR, "transaction-journal.json");
+const BUDGETS_PATH = path.join(DATA_DIR, "category-budgets.json");
+const CATEGORY_RULES_PATH = path.join(DATA_DIR, "category-rules.json");
+const SAVINGS_GOALS_PATH = path.join(DATA_DIR, "savings-goals.json");
 export const UNDO_WINDOW_MS = 60_000;
 
 interface DeletedTransaction {
@@ -183,7 +191,7 @@ export function getTransactions(
   if (minAmount !== undefined) {all = all.filter((t) => t.amount >= minAmount);}
   if (maxAmount !== undefined) {all = all.filter((t) => t.amount <= maxAmount);}
   if (category && category !== "all")
-  {all = all.filter((t) => t.category === category);}
+  {all = all.filter((t) => t.category === category || t.splits?.some((split) => split.category === category));}
   if (search) {
     const q = search.toLowerCase();
     all = all.filter((t) => t.description.toLowerCase().includes(q));
@@ -220,6 +228,81 @@ export function getRecurringTransactions(): Transaction[] {
     .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 }
 
+export function getCategoryBudgets(): CategoryBudget[] {
+  if (!fs.existsSync(BUDGETS_PATH)) {return [];}
+  const value: unknown = JSON.parse(fs.readFileSync(BUDGETS_PATH, "utf8"));
+  if (!Array.isArray(value)) {throw new Error("Category budget storage must be an array.");}
+  return value as CategoryBudget[];
+}
+
+export function saveCategoryBudgets(budgets: CategoryBudget[]): CategoryBudget[] {
+  writeJsonAtomically(BUDGETS_PATH, budgets);
+  return budgets;
+}
+
+export function getCategoryRules(): CategoryRule[] {
+  if (!fs.existsSync(CATEGORY_RULES_PATH)) {return [];}
+  const value: unknown = JSON.parse(fs.readFileSync(CATEGORY_RULES_PATH, "utf8"));
+  if (!Array.isArray(value)) {throw new Error("Category rule storage must be an array.");}
+  return (value as CategoryRule[]).sort((a, b) => b.matchText.length - a.matchText.length);
+}
+
+export function saveCategoryRules(rules: CategoryRule[]): CategoryRule[] {
+  writeJsonAtomically(CATEGORY_RULES_PATH, rules);
+  return rules;
+}
+
+export function getSavingsGoals(): SavingsGoal[] {
+  if (!fs.existsSync(SAVINGS_GOALS_PATH)) {return [];}
+  const value: unknown = JSON.parse(fs.readFileSync(SAVINGS_GOALS_PATH, "utf8"));
+  if (!Array.isArray(value)) {throw new Error("Savings goal storage must be an array.");}
+  return value as SavingsGoal[];
+}
+
+export function saveSavingsGoals(goals: SavingsGoal[]): SavingsGoal[] {
+  writeJsonAtomically(SAVINGS_GOALS_PATH, goals);
+  return goals;
+}
+
+function resolveCategory(description: string, category: Category, rules = getCategoryRules()): Category {
+  if (category !== "Other") {return category;}
+  const normalizedDescription = description.toLocaleLowerCase();
+  const match = rules
+    .find((rule) => normalizedDescription.includes(rule.matchText.toLocaleLowerCase()));
+  return match?.category ?? category;
+}
+
+export function getCategoryBudgetStatus(month: string): {
+  month: string;
+  totalSpent: number;
+  totalBudget: number;
+  budgets: CategoryBudgetStatus[];
+} {
+  const spending = new Map<Category, number>();
+  readAll().forEach((transaction) => {
+    if (transaction.type !== "Expense" || transaction.date.slice(0, 7) !== month) {return;}
+    const allocations = transaction.splits ?? [{ category: transaction.category, amount: transaction.amount }];
+    allocations.forEach(({ category, amount }) => {
+      spending.set(category, (spending.get(category) ?? 0) + amount);
+    });
+  });
+  const budgets = getCategoryBudgets().map((budget) => {
+    const spent = round2(spending.get(budget.category) ?? 0);
+    return {
+      ...budget,
+      spent,
+      remaining: round2(budget.monthlyLimit - spent),
+      percentage: budget.monthlyLimit > 0 ? Math.round((spent / budget.monthlyLimit) * 100) : 0,
+    };
+  });
+  return {
+    month,
+    totalSpent: round2([...spending.values()].reduce((sum, amount) => sum + amount, 0)),
+    totalBudget: round2(budgets.reduce((sum, budget) => sum + budget.monthlyLimit, 0)),
+    budgets,
+  };
+}
+
 export function getTransactionById(id: number): Transaction | null {
   return readAll().find((t) => t.id === id) ?? null;
 }
@@ -233,8 +316,9 @@ export function createTransaction(input: TransactionInput): Transaction {
     amount: input.amount,
     description: input.description,
     date: input.date,
-    category: input.category,
+    category: input.splits?.[0].category ?? resolveCategory(input.description, input.category),
     is_recurring: input.is_recurring ? 1 : 0,
+    ...(input.splits ? { splits: input.splits } : {}),
   };
   all.push(tx);
   commitTransactions(all);
@@ -255,8 +339,9 @@ export function updateTransaction(
     amount: input.amount,
     description: input.description,
     date: input.date,
-    category: input.category,
+    category: input.splits?.[0].category ?? resolveCategory(input.description, input.category),
     is_recurring: input.is_recurring ? 1 : 0,
+    ...(input.splits ? { splits: input.splits } : {}),
   };
   commitTransactions(all);
   return all[idx];
@@ -301,18 +386,26 @@ export function importTransactions(inputs: TransactionInput[], skipDuplicates: b
   const previous = previousOperation(metadata, operationId, "import", hash);
   if (previous) {return previous.result as ImportResult;}
   const all = readAll();
+  const categoryRules = getCategoryRules();
   const seen = new Set(all.map(transactionFingerprint));
   let id = nextId(all);
   let imported = 0;
   let skipped = 0;
   for (const input of transactions) {
-    const key = transactionFingerprint(input);
+    const category = input.splits?.[0].category ?? resolveCategory(input.description, input.category, categoryRules);
+    const key = transactionFingerprint({ ...input, category });
     if (skipDuplicates && seen.has(key)) {
       skipped++;
       continue;
     }
     if (!Number.isSafeInteger(id)) {throw new Error("Transaction ID range exhausted.");}
-    all.push({ ...input, id: id++, is_recurring: input.is_recurring ? 1 : 0 });
+    all.push({
+      ...input,
+      id: id++,
+      category,
+      is_recurring: input.is_recurring ? 1 : 0,
+      ...(input.splits ? { splits: input.splits } : {}),
+    });
     seen.add(key);
     imported++;
   }
@@ -329,6 +422,9 @@ export function createBackup(theme: ThemePreference): SpendrBackup {
     createdAt: new Date().toISOString(),
     settings: { theme },
     transactions: readAll(),
+    budgets: getCategoryBudgets(),
+    categoryRules: getCategoryRules(),
+    savingsGoals: getSavingsGoals(),
   };
 }
 
@@ -351,7 +447,7 @@ export function restoreBackup(backup: SpendrBackup, currentTheme: ThemePreferenc
   // Preserve even legacy records that fail the stricter import validator.
   const recovery: SpendrBackup = {
     app: "spendr", version: 1, createdAt: new Date().toISOString(),
-    settings: { theme: currentTheme }, transactions: readAll(),
+    settings: { theme: currentTheme }, transactions: readAll(), budgets: getCategoryBudgets(), categoryRules: getCategoryRules(), savingsGoals: getSavingsGoals(),
   };
   const backupDirectory = path.join(DATA_DIR, "backups");
   fs.mkdirSync(backupDirectory, { recursive: true });
@@ -362,6 +458,9 @@ export function restoreBackup(backup: SpendrBackup, currentTheme: ThemePreferenc
   const result = { restored: validated.transactions.length, recoveryFile };
   metadata.operations.push({ id: operationId, kind: "restore", hash, result });
   commitTransactions(validated.transactions, metadata);
+  saveCategoryBudgets(validated.budgets ?? []);
+  saveCategoryRules(validated.categoryRules ?? []);
+  saveSavingsGoals(validated.savingsGoals ?? []);
   return result;
 }
 
@@ -369,8 +468,13 @@ export function restoreBackup(backup: SpendrBackup, currentTheme: ThemePreferenc
 // Insights / analytics
 // ──────────────────────────────────────────────
 
-export function getInsights(): Insights {
-  const all = readAll().sort((a, b) => a.date.localeCompare(b.date));
+export function getInsights(dateFrom?: string, dateTo?: string): Insights {
+  const all = readAll()
+    .filter((transaction) =>
+      (!dateFrom || transaction.date >= dateFrom)
+      && (!dateTo || transaction.date <= dateTo),
+    )
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   const income = all.filter((t) => t.type === "Income");
   const expenses = all.filter((t) => t.type === "Expense");
@@ -404,9 +508,11 @@ export function getInsights(): Insights {
     else {entry.expenses += t.amount;}
   });
 
-  const monthlyData: MonthlyData[] = Array.from(monthlyMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .slice(-12)
+  const monthlyEntries = Array.from(monthlyMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b));
+  const monthlyData: MonthlyData[] = (dateFrom || dateTo
+    ? monthlyEntries
+    : monthlyEntries.slice(-12))
     .map(([key, { income: inc, expenses: exp }]) => {
       const [year, month] = key.split("-");
       const label = new Date(
@@ -448,11 +554,13 @@ function buildCategoryData(
 ): CategoryData[] {
   const map = new Map<string, { amount: number; count: number }>();
   transactions.forEach((t) => {
-    const cat = t.category ?? "Other";
-    if (!map.has(cat)) {map.set(cat, { amount: 0, count: 0 });}
-    const entry = map.get(cat)!;
-    entry.amount += t.amount;
-    entry.count++;
+    const allocations = t.splits ?? [{ category: t.category ?? "Other", amount: t.amount }];
+    allocations.forEach(({ category, amount }) => {
+      if (!map.has(category)) {map.set(category, { amount: 0, count: 0 });}
+      const entry = map.get(category)!;
+      entry.amount += amount;
+      entry.count++;
+    });
   });
   return Array.from(map.entries())
     .map(([category, { amount, count }]) => ({

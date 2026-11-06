@@ -12,25 +12,26 @@
     --popover-foreground: 224 71.4% 4.1%;
     --primary: 210 40% 98%;
     --primary-foreground: 222 47% 11%;
-    --secondary: 217 81% 44%;
+    --secondary: 211 70% 38%;
     --secondary-foreground: 210 20% 98%;
-    --accent: 71 100% 40%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 169 68% 32%;
+    --accent-foreground: 0 0% 100%;
     --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 20% 98%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 262.1 83.3% 57.8%;
+    --ring: 169 68% 32%;
     --radius: 0.6rem;
 
     /* Custom semantic colors */
-    --income: 142.1 76.2% 36.3%;
-    --income-foreground: 355.7 100% 97.3%;
-    --income-muted: 142.1 76.2% 93%;
-    --expense: 0 84.2% 60.2%;
+    --income: 145 55% 34%;
+    --income-foreground: 0 0% 100%;
+    --income-muted: 145 45% 93%;
+    --expense: 2 62% 52%;
     --expense-foreground: 210 20% 98%;
-    --expense-muted: 0 84.2% 95%;
+    --expense-muted: 2 55% 95%;
   }
 
   .dark {
@@ -38,27 +39,29 @@
     --foreground: 210 20% 98%;
     --card: 225 27% 5%;
     --card-foreground: 210 20% 98%;
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
     --popover: 225 27% 5%;
     --popover-foreground: 210 20% 98%;
     --primary: 225 27% 2%;
     --primary-foreground: 210 20% 98%;
-    --secondary: 217 81% 44%;
+    --secondary: 211 68% 58%;
     --secondary-foreground: 210 20% 98%;
-    --accent: 72 100% 57%;
-    --accent-foreground: 225 27% 2%;
+    --accent: 169 62% 52%;
+    --accent-foreground: 225 27% 5%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 20% 98%;
     --border: 215 27.9% 16.9%;
     --input: 215 27.9% 16.9%;
-    --ring: 263.4 70% 50.4%;
+    --ring: 169 62% 52%;
 
     /* Custom semantic colors */
-    --income: 142.1 70.6% 45.3%;
+    --income: 145 55% 58%;
     --income-foreground: 144.9 80.4% 10%;
-    --income-muted: 142.1 70.6% 12%;
-    --expense: 0 72.2% 50.6%;
+    --income-muted: 145 40% 14%;
+    --expense: 2 62% 64%;
     --expense-foreground: 210 20% 98%;
-    --expense-muted: 0 62.8% 12%;
+    --expense-muted: 2 45% 16%;
   }
 }
 
@@ -71,7 +74,7 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
+    @apply font-brand font-semibold tracking-tight;
   }
 }
 

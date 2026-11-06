@@ -138,7 +138,9 @@ export function DeleteDialog({
               {transaction.description}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              {formatDate(transaction.date)}&ensp;·&ensp;{transaction.category}
+              {formatDate(transaction.date)}&ensp;·&ensp;{transaction.splits?.length
+                ? `Split across ${transaction.splits.length} categories`
+                : transaction.category}
               {transaction.is_recurring ? "\u00a0· Recurring" : ""}
             </p>
           </div>

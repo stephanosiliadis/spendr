@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 import {
@@ -33,6 +33,7 @@ import {
   type Category,
   type Transaction,
   type TransactionInput,
+  type TransactionSplit,
   type TransactionType,
 } from "@/lib/types";
 
@@ -56,6 +57,8 @@ export function TransactionForm({
   const [description, setDescription] = useState("");
   const [date, setDate] = useState<Date>(new Date());
   const [category, setCategory] = useState<Category>("Other");
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [splits, setSplits] = useState<Array<{ category: Category; amount: string }>>([]);
   const [isRecurring, setIsRecurring] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -74,6 +77,8 @@ export function TransactionForm({
         setDescription(transaction.description);
         setDate(new Date(`${transaction.date  }T00:00:00`));
         setCategory(transaction.category);
+        setSplitEnabled(!!transaction.splits?.length);
+        setSplits((transaction.splits ?? []).map((split) => ({ ...split, amount: String(split.amount) })));
         setIsRecurring(transaction.is_recurring === 1);
       } else {
         setType("Expense");
@@ -81,6 +86,8 @@ export function TransactionForm({
         setDescription("");
         setDate(new Date());
         setCategory("Other");
+        setSplitEnabled(false);
+        setSplits([]);
         setIsRecurring(false);
       }
       setErrors({});
@@ -131,9 +138,18 @@ export function TransactionForm({
     setAmount(template ? String(template.amount) : "");
     setDescription(template?.description ?? "");
     setCategory(template?.category ?? "Other");
+    setSplitEnabled(!!template?.splits?.length);
+    setSplits((template?.splits ?? []).map((split) => ({ ...split, amount: String(split.amount) })));
     setIsRecurring(!!template);
     setErrors({});
   };
+
+  const splitAllocatedCents = splits.reduce(
+    (sum, split) => sum + Math.round((Number(split.amount) || 0) * 100),
+    0,
+  );
+  const transactionCents = Math.round((Number(amount) || 0) * 100);
+  const unallocatedCents = transactionCents - splitAllocatedCents;
 
   const validate = (): boolean => {
     const next: Record<string, string> = {};
@@ -147,6 +163,18 @@ export function TransactionForm({
       next.description = "Description is required";
     } else if (description.trim().length > 200) {
       next.description = "Maximum 200 characters";
+    }
+    if (splitEnabled) {
+      const categories = splits.map((split) => split.category);
+      const validAmounts = splits.every((split) => /^\d+(\.\d{1,2})?$/.test(split.amount.trim()) && Number(split.amount) > 0);
+      const splitTotalCents = splits.reduce((sum, split) => sum + Math.round((Number(split.amount) || 0) * 100), 0);
+      if (splits.length < 2 || categories.length !== new Set(categories).size) {
+        next.splits = "Choose a different category for each allocation.";
+      } else if (!validAmounts) {
+        next.splits = "Enter a positive amount with up to two decimal places for each category.";
+      } else if (splitTotalCents !== Math.round(parsed * 100)) {
+        next.splits = "Split amounts must add up to the transaction total.";
+      }
     }
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -162,8 +190,11 @@ export function TransactionForm({
       amount: parseFloat(parseFloat(amount).toFixed(2)),
       description: description.trim(),
       date: formatDateInput(date),
-      category,
+      category: splitEnabled ? splits[0].category : category,
       is_recurring: isRecurring,
+      ...(splitEnabled
+        ? { splits: splits.map((split): TransactionSplit => ({ category: split.category, amount: Number(split.amount) })) }
+        : {}),
     };
 
     try {
@@ -242,7 +273,11 @@ export function TransactionForm({
             <Label>Type</Label>
             <Select
               value={type}
-              onValueChange={(v) => setType(v as TransactionType)}
+              onValueChange={(value) => {
+                const nextType = value as TransactionType;
+                setType(nextType);
+                if (nextType === "Income") {setSplitEnabled(false);}
+              }}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -341,25 +376,140 @@ export function TransactionForm({
             </Popover>
           </div>
 
-          {/* Category */}
-          <div className="space-y-1.5">
-            <Label>Category</Label>
-            <Select
-              value={category}
-              onValueChange={(v) => setCategory(v as Category)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {type === "Expense" && (
+            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="txn-split" className="cursor-pointer text-sm font-medium">
+                  Split across categories
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Allocate this expense to more than one category
+                </p>
+              </div>
+              <Switch
+                id="txn-split"
+                checked={splitEnabled}
+                onCheckedChange={(checked) => {
+                  setSplitEnabled(checked);
+                  if (checked && splits.length === 0) {
+                    const cents = Math.round((Number(amount) || 0) * 100);
+                    const first = Math.floor(cents / 2);
+                    const second = cents - first;
+                    setSplits([
+                      { category: "Other", amount: first ? (first / 100).toFixed(2) : "" },
+                      { category: "Food & Dining", amount: second ? (second / 100).toFixed(2) : "" },
+                    ]);
+                  }
+                  setErrors((current) => ({ ...current, splits: "" }));
+                }}
+              />
+            </div>
+          )}
+
+          {!splitEnabled ? (
+            <div className="space-y-1.5">
+              <Label>Category</Label>
+              <Select
+                value={category}
+                onValueChange={(value) => setCategory(value as Category)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {category === "Other" && (
+                <p className="text-xs text-muted-foreground">
+                  Matching category rules can assign a category when you save.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3 rounded-lg border border-border p-4">
+              <div>
+                <p className="text-sm font-medium">Category allocations</p>
+                <p className="text-xs text-muted-foreground">
+                  Split amounts must total {formatCurrency(Number(amount) || 0)}.
+                </p>
+              </div>
+              {splits.map((split, index) => (
+                <div key={`${index}-${split.category}`} className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)_auto] items-end gap-2">
+                  <div className="min-w-0 space-y-1.5">
+                    <Label htmlFor={`txn-split-category-${index}`}>Category</Label>
+                    <Select
+                      value={split.category}
+                      onValueChange={(value) => setSplits((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, category: value as Category } : item))}
+                    >
+                      <SelectTrigger id={`txn-split-category-${index}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CATEGORIES.map((cat) => (
+                          <SelectItem
+                            key={cat}
+                            value={cat}
+                            disabled={splits.some((item, itemIndex) => itemIndex !== index && item.category === cat)}
+                          >
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="min-w-0 space-y-1.5">
+                    <Label htmlFor={`txn-split-amount-${index}`}>Amount</Label>
+                    <Input
+                      id={`txn-split-amount-${index}`}
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      inputMode="decimal"
+                      placeholder="0.00"
+                      value={split.amount}
+                      onChange={(event) => setSplits((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, amount: event.target.value } : item))}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 text-muted-foreground hover:text-destructive"
+                    aria-label={`Remove ${split.category} allocation`}
+                    disabled={splits.length <= 2}
+                    onClick={() => setSplits((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={splits.length >= CATEGORIES.length}
+                onClick={() => {
+                  const nextCategory = CATEGORIES.find((cat) => !splits.some((split) => split.category === cat));
+                  if (nextCategory) {setSplits((current) => [...current, { category: nextCategory, amount: "" }]);}
+                }}
+              >
+                <Plus className="h-4 w-4" /> Add category
+              </Button>
+              {amount && (
+                <p className={`text-xs ${unallocatedCents === 0 ? "text-income" : "text-muted-foreground"}`}>
+                  {unallocatedCents === 0
+                    ? "Fully allocated"
+                    : unallocatedCents > 0
+                      ? `${formatCurrency(unallocatedCents / 100)} left to allocate`
+                      : `${formatCurrency(Math.abs(unallocatedCents) / 100)} over the total`}
+                </p>
+              )}
+              {errors.splits && <p className="text-xs text-destructive">{errors.splits}</p>}
+            </div>
+          )}
 
           {/* Recurring */}
           <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">

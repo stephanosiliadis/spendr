@@ -9,7 +9,10 @@ import {
   LayoutDashboard,
   Menu,
   FileText,
+  PiggyBank,
+  Tags,
   Shield,
+  Target,
   Wallet,
   X,
 } from "lucide-react";
@@ -21,6 +24,9 @@ const navLinks = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/transactions", icon: ArrowLeftRight, label: "Transactions" },
   { href: "/insights", icon: BarChart3, label: "Analytics" },
+  { href: "/budgets", icon: PiggyBank, label: "Budgets" },
+  { href: "/rules", icon: Tags, label: "Category rules" },
+  { href: "/goals", icon: Target, label: "Savings goals" },
   { href: "/privacy-policy", icon: Shield, label: "Privacy Policy" },
   { href: "/terms-page", icon: FileText, label: "Terms" },
 ] as const;
@@ -47,7 +53,7 @@ function NavItem({
         "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
         isActive
           ? "bg-secondary/15 text-secondary"
-          : "text-muted-foreground hover:bg-accent hover:text-foreground",
+          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
       )}
     >
       <Icon
@@ -69,7 +75,7 @@ function SidebarBody({ onNavClick }: { onNavClick?: () => void }) {
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary/15">
           <Wallet className="h-5 w-5 text-secondary" />
         </div>
-        <span className="font-xl font-bold text-secondary">
+        <span className="font-brand text-xl font-semibold tracking-tight text-secondary">
                 Spendr
               </span>
       </div>
@@ -93,7 +99,7 @@ function SidebarBody({ onNavClick }: { onNavClick?: () => void }) {
       {/* Footer */}
       <div className="flex items-center justify-between border-t border-border px-4 py-3">
         <ThemeToggle />
-        <span className="text-xs text-muted-foreground">v1.0.0</span>
+        <span className="text-xs text-muted-foreground">v1.1.0</span>
       </div>
     </>
   );
@@ -118,7 +124,7 @@ export function Sidebar() {
       <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-border bg-card/95 px-4 backdrop-blur-sm lg:hidden">
         <button
           onClick={() => setMobileOpen(true)}
-          className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
           aria-label="Open menu"
         >
           <Menu className="h-5 w-5" />
@@ -147,13 +153,13 @@ export function Sidebar() {
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary/15">
                   <Wallet className="h-4 w-4 text-secondary" />
                 </div>
-                <span className="font-bold text-secondary">
+                <span className="font-brand text-lg font-semibold tracking-tight text-secondary">
                   Spendr
                 </span>
               </div>
               <button
                 onClick={() => setMobileOpen(false)}
-                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 aria-label="Close menu"
               >
                 <X className="h-4 w-4" />
@@ -176,7 +182,7 @@ export function Sidebar() {
             {/* Drawer footer */}
             <div className="flex items-center justify-between border-t border-border px-4 py-3">
               <ThemeToggle />
-              <span className="text-xs text-muted-foreground">v1.0.0</span>
+              <span className="text-xs text-muted-foreground">v1.1.0</span>
             </div>
           </div>
 

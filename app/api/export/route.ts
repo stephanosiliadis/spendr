@@ -12,17 +12,19 @@ export async function GET(req: NextRequest) {
     );
 
     if (format === "csv") {
-      const header = "ID,Type,Amount,Description,Date,Category,Recurring";
+      const header = "ID,Type,Amount,Description,Date,Category,Recurring,Splits";
+      const csvCell = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`;
       const rows = transactions.map((t) =>
         [
           t.id,
           t.type,
           t.amount,
-          `"${t.description.replace(/"/g, '""')}"`,
+          t.description,
           t.date,
           t.category,
           t.is_recurring ? "Yes" : "No",
-        ].join(","),
+          t.splits ? JSON.stringify(t.splits) : "",
+        ].map(csvCell).join(","),
       );
       const csv = [header, ...rows].join("\n");
 
