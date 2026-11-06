@@ -77,7 +77,7 @@ function SidebarBody({ onNavClick }: { onNavClick?: () => void }) {
         </div>
         <span className="font-brand text-xl font-semibold tracking-tight text-secondary">
                 Spendr
-              </span>
+        </span>
       </div>
 
       {/* Navigation */}
