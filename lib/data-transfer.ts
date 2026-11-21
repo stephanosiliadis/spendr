@@ -216,7 +216,7 @@ export function validateBackup(value: unknown): SpendrBackup {
       if (typeof row.name !== "string" || !row.name.trim() || row.name.trim().length > 80) {
         return invalid(`Savings goal ${index + 1}: invalid name.`);
       }
-      const validMoney = (amount: unknown, allowZero: boolean) => typeof amount === "number"
+      const validMoney = (amount: unknown, allowZero: boolean): amount is number => typeof amount === "number"
         && Number.isFinite(amount)
         && (allowZero ? amount >= 0 : amount > 0)
         && Number.isSafeInteger(Math.round(amount * 100))

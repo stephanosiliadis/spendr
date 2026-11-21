@@ -297,7 +297,7 @@ export function getCategoryBudgetStatus(month: string): {
   });
   return {
     month,
-    totalSpent: round2([...spending.values()].reduce((sum, amount) => sum + amount, 0)),
+    totalSpent: round2(Array.from(spending.values()).reduce((sum, amount) => sum + amount, 0)),
     totalBudget: round2(budgets.reduce((sum, budget) => sum + budget.monthlyLimit, 0)),
     budgets,
   };

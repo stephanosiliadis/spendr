@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
@@ -8,12 +9,39 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CategoryChart } from "@/components/category-chart";
-import { MonthlyChart } from "@/components/monthly-chart";
 import { StatsCards } from "@/components/stats-cards";
-import { TransactionForm } from "@/components/transaction-form";
 import type { Insights, Transaction } from "@/lib/types";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
+
+// Recharts is the heaviest dependency on this page and the charts are below the
+// fold of the stats row, so load them in a separate chunk instead of blocking
+// the dashboard's first compile/paint. The form is only needed once opened.
+function ChartSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="mt-1 h-3.5 w-32" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-80 w-full rounded-lg" />
+      </CardContent>
+    </Card>
+  );
+}
+
+const MonthlyChart = dynamic(
+  () => import("@/components/monthly-chart").then((m) => m.MonthlyChart),
+  { ssr: false, loading: () => <ChartSkeleton /> },
+);
+const CategoryChart = dynamic(
+  () => import("@/components/category-chart").then((m) => m.CategoryChart),
+  { ssr: false, loading: () => <ChartSkeleton /> },
+);
+const TransactionForm = dynamic(
+  () => import("@/components/transaction-form").then((m) => m.TransactionForm),
+  { ssr: false },
+);
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -31,6 +59,7 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
+  const [formMounted, setFormMounted] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -55,6 +84,11 @@ export default function DashboardPage() {
     load();
   }, [refreshKey]);
 
+  function openForm() {
+    setFormMounted(true);
+    setFormOpen(true);
+  }
+
   return (
     <div className="flex flex-col gap-6 p-6 pt-20 lg:pt-6 animate-fade-in">
       {/* ── Page header ───────────────────────────────────────────── */}
@@ -65,7 +99,7 @@ export default function DashboardPage() {
             Here&apos;s your financial overview for today
           </p>
         </div>
-        <Button onClick={() => setFormOpen(true)}>
+        <Button onClick={openForm}>
           <Plus className="h-4 w-4" />
           Add Transaction
         </Button>
@@ -121,7 +155,7 @@ export default function DashboardPage() {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => setFormOpen(true)}
+                onClick={openForm}
               >
                 <Plus className="h-3.5 w-3.5" />
                 Add your first transaction
@@ -186,11 +220,13 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      <TransactionForm
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        onSuccess={() => setRefreshKey((key) => key + 1)}
-      />
+      {formMounted && (
+        <TransactionForm
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          onSuccess={() => setRefreshKey((key) => key + 1)}
+        />
+      )}
     </div>
   );
 }
