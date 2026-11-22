@@ -3,9 +3,7 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CalendarIcon, Loader2, Plus, Trash2 } from "lucide-react";
-import { format } from "date-fns";
-
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,8 +24,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { cn, formatCurrency, formatDateInput } from "@/lib/utils";
 import {
   CATEGORIES,
@@ -38,10 +35,10 @@ import {
 } from "@/lib/types";
 
 interface TransactionFormProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  transaction?: Transaction | null
-  onSuccess: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  transaction?: Transaction | null;
+  onSuccess: () => void;
 }
 
 export function TransactionForm({
@@ -58,12 +55,15 @@ export function TransactionForm({
   const [date, setDate] = useState<Date>(new Date());
   const [category, setCategory] = useState<Category>("Other");
   const [splitEnabled, setSplitEnabled] = useState(false);
-  const [splits, setSplits] = useState<Array<{ category: Category; amount: string }>>([]);
+  const [splits, setSplits] = useState<
+    Array<{ category: Category; amount: string }>
+  >([]);
   const [isRecurring, setIsRecurring] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [recurringTransactions, setRecurringTransactions] = useState<Transaction[]>([]);
+  const [recurringTransactions, setRecurringTransactions] = useState<
+    Transaction[]
+  >([]);
   const [selectedRecurring, setSelectedRecurring] = useState("new");
   const [recurringLoading, setRecurringLoading] = useState(false);
   const [recurringError, setRecurringError] = useState(false);
@@ -75,10 +75,15 @@ export function TransactionForm({
         setType(transaction.type);
         setAmount(String(transaction.amount));
         setDescription(transaction.description);
-        setDate(new Date(`${transaction.date  }T00:00:00`));
+        setDate(new Date(`${transaction.date}T00:00:00`));
         setCategory(transaction.category);
         setSplitEnabled(!!transaction.splits?.length);
-        setSplits((transaction.splits ?? []).map((split) => ({ ...split, amount: String(split.amount) })));
+        setSplits(
+          (transaction.splits ?? []).map((split) => ({
+            ...split,
+            amount: String(split.amount),
+          })),
+        );
         setIsRecurring(transaction.is_recurring === 1);
       } else {
         setType("Expense");
@@ -96,7 +101,9 @@ export function TransactionForm({
   }, [open, transaction]);
 
   useEffect(() => {
-    if (!open || isEditing) {return;}
+    if (!open || isEditing) {
+      return;
+    }
 
     const controller = new AbortController();
     setRecurringTransactions([]);
@@ -109,21 +116,36 @@ export function TransactionForm({
           signal: controller.signal,
           cache: "no-store",
         });
-        if (!res.ok) {throw new Error("Failed to fetch recurring transactions");}
+        if (!res.ok) {
+          throw new Error("Failed to fetch recurring transactions");
+        }
         const data: Transaction[] = await res.json();
         // Repeated occurrences with identical details need only one template.
         const seen = new Set<string>();
         const templates = data.filter((tx) => {
-          const key = JSON.stringify([tx.type, tx.amount, tx.description, tx.category]);
-          if (seen.has(key)) {return false;}
+          const key = JSON.stringify([
+            tx.type,
+            tx.amount,
+            tx.description,
+            tx.category,
+          ]);
+          if (seen.has(key)) {
+            return false;
+          }
           seen.add(key);
           return true;
         });
-        if (!controller.signal.aborted) {setRecurringTransactions(templates);}
+        if (!controller.signal.aborted) {
+          setRecurringTransactions(templates);
+        }
       } catch {
-        if (!controller.signal.aborted) {setRecurringError(true);}
+        if (!controller.signal.aborted) {
+          setRecurringError(true);
+        }
       } finally {
-        if (!controller.signal.aborted) {setRecurringLoading(false);}
+        if (!controller.signal.aborted) {
+          setRecurringLoading(false);
+        }
       }
     }
 
@@ -132,14 +154,21 @@ export function TransactionForm({
   }, [open, isEditing]);
 
   const handleRecurringChange = (value: string) => {
-    const template = recurringTransactions.find((tx) => String(tx.id) === value);
+    const template = recurringTransactions.find(
+      (tx) => String(tx.id) === value,
+    );
     setSelectedRecurring(value);
     setType(template?.type ?? "Expense");
     setAmount(template ? String(template.amount) : "");
     setDescription(template?.description ?? "");
     setCategory(template?.category ?? "Other");
     setSplitEnabled(!!template?.splits?.length);
-    setSplits((template?.splits ?? []).map((split) => ({ ...split, amount: String(split.amount) })));
+    setSplits(
+      (template?.splits ?? []).map((split) => ({
+        ...split,
+        amount: String(split.amount),
+      })),
+    );
     setIsRecurring(!!template);
     setErrors({});
   };
@@ -166,12 +195,20 @@ export function TransactionForm({
     }
     if (splitEnabled) {
       const categories = splits.map((split) => split.category);
-      const validAmounts = splits.every((split) => /^\d+(\.\d{1,2})?$/.test(split.amount.trim()) && Number(split.amount) > 0);
-      const splitTotalCents = splits.reduce((sum, split) => sum + Math.round((Number(split.amount) || 0) * 100), 0);
+      const validAmounts = splits.every(
+        (split) =>
+          /^\d+(\.\d{1,2})?$/.test(split.amount.trim()) &&
+          Number(split.amount) > 0,
+      );
+      const splitTotalCents = splits.reduce(
+        (sum, split) => sum + Math.round((Number(split.amount) || 0) * 100),
+        0,
+      );
       if (splits.length < 2 || categories.length !== new Set(categories).size) {
         next.splits = "Choose a different category for each allocation.";
       } else if (!validAmounts) {
-        next.splits = "Enter a positive amount with up to two decimal places for each category.";
+        next.splits =
+          "Enter a positive amount with up to two decimal places for each category.";
       } else if (splitTotalCents !== Math.round(parsed * 100)) {
         next.splits = "Split amounts must add up to the transaction total.";
       }
@@ -182,7 +219,9 @@ export function TransactionForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) {return;}
+    if (!validate()) {
+      return;
+    }
 
     setLoading(true);
     const body: TransactionInput = {
@@ -193,7 +232,14 @@ export function TransactionForm({
       category: splitEnabled ? splits[0].category : category,
       is_recurring: isRecurring,
       ...(splitEnabled
-        ? { splits: splits.map((split): TransactionSplit => ({ category: split.category, amount: Number(split.amount) })) }
+        ? {
+          splits: splits.map(
+            (split): TransactionSplit => ({
+              category: split.category,
+              amount: Number(split.amount),
+            }),
+          ),
+        }
         : {}),
     };
 
@@ -242,7 +288,11 @@ export function TransactionForm({
               <Select
                 value={selectedRecurring}
                 onValueChange={handleRecurringChange}
-                disabled={recurringLoading || loading || recurringTransactions.length === 0}
+                disabled={
+                  recurringLoading ||
+                  loading ||
+                  recurringTransactions.length === 0
+                }
               >
                 <SelectTrigger id="txn-template">
                   <SelectValue />
@@ -251,12 +301,18 @@ export function TransactionForm({
                   <SelectItem value="new">Start from scratch</SelectItem>
                   {recurringTransactions.map((tx) => (
                     <SelectItem key={tx.id} value={String(tx.id)}>
-                      {tx.description} · {formatCurrency(tx.amount)} · {tx.type} · {tx.category}
+                      {tx.description} · {formatCurrency(tx.amount)} · {tx.type}{" "}
+                      · {tx.category}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <p className={cn("text-xs text-muted-foreground", recurringError && "text-destructive")}>
+              <p
+                className={cn(
+                  "text-xs text-muted-foreground",
+                  recurringError && "text-destructive",
+                )}
+              >
                 {recurringLoading
                   ? "Loading recurring transactions…"
                   : recurringError
@@ -276,7 +332,9 @@ export function TransactionForm({
               onValueChange={(value) => {
                 const nextType = value as TransactionType;
                 setType(nextType);
-                if (nextType === "Income") {setSplitEnabled(false);}
+                if (nextType === "Income") {
+                  setSplitEnabled(false);
+                }
               }}
             >
               <SelectTrigger>
@@ -313,7 +371,11 @@ export function TransactionForm({
                 min="0.01"
                 step="0.01"
                 placeholder="0.00"
-                className={cn("pl-7", errors.amount && "border-destructive focus-visible:ring-destructive")}
+                className={cn(
+                  "pl-7",
+                  errors.amount &&
+                    "border-destructive focus-visible:ring-destructive",
+                )}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
               />
@@ -329,7 +391,10 @@ export function TransactionForm({
             <Input
               id="txn-desc"
               placeholder="What was this for?"
-              className={cn(errors.description && "border-destructive focus-visible:ring-destructive")}
+              className={cn(
+                errors.description &&
+                  "border-destructive focus-visible:ring-destructive",
+              )}
               value={description}
               maxLength={200}
               onChange={(e) => setDescription(e.target.value)}
@@ -349,37 +414,21 @@ export function TransactionForm({
           {/* Date */}
           <div className="space-y-1.5">
             <Label>Date</Label>
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal text-foreground"
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                  {date ? format(date, "dd MMM yyyy") : "Pick a date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(d) => {
-                    if (d) {
-                      setDate(d);
-                      setCalendarOpen(false);
-                    }
-                  }}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <DatePicker
+              date={date}
+              onSelect={(selected) => selected && setDate(selected)}
+              placeholder="Pick a date"
+              className="w-full text-foreground"
+            />
           </div>
 
           {type === "Expense" && (
             <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">
               <div className="space-y-0.5">
-                <Label htmlFor="txn-split" className="cursor-pointer text-sm font-medium">
+                <Label
+                  htmlFor="txn-split"
+                  className="cursor-pointer text-sm font-medium"
+                >
                   Split across categories
                 </Label>
                 <p className="text-xs text-muted-foreground">
@@ -396,8 +445,14 @@ export function TransactionForm({
                     const first = Math.floor(cents / 2);
                     const second = cents - first;
                     setSplits([
-                      { category: "Other", amount: first ? (first / 100).toFixed(2) : "" },
-                      { category: "Food & Dining", amount: second ? (second / 100).toFixed(2) : "" },
+                      {
+                        category: "Other",
+                        amount: first ? (first / 100).toFixed(2) : "",
+                      },
+                      {
+                        category: "Food & Dining",
+                        amount: second ? (second / 100).toFixed(2) : "",
+                      },
                     ]);
                   }
                   setErrors((current) => ({ ...current, splits: "" }));
@@ -418,7 +473,9 @@ export function TransactionForm({
                 </SelectTrigger>
                 <SelectContent>
                   {CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -433,16 +490,30 @@ export function TransactionForm({
               <div>
                 <p className="text-sm font-medium">Category allocations</p>
                 <p className="text-xs text-muted-foreground">
-                  Split amounts must total {formatCurrency(Number(amount) || 0)}.
+                  Split amounts must total {formatCurrency(Number(amount) || 0)}
+                  .
                 </p>
               </div>
               {splits.map((split, index) => (
-                <div key={`${index}-${split.category}`} className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)_auto] items-end gap-2">
+                <div
+                  key={`${index}-${split.category}`}
+                  className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)_auto] items-end gap-2"
+                >
                   <div className="min-w-0 space-y-1.5">
-                    <Label htmlFor={`txn-split-category-${index}`}>Category</Label>
+                    <Label htmlFor={`txn-split-category-${index}`}>
+                      Category
+                    </Label>
                     <Select
                       value={split.category}
-                      onValueChange={(value) => setSplits((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, category: value as Category } : item))}
+                      onValueChange={(value) =>
+                        setSplits((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? { ...item, category: value as Category }
+                              : item,
+                          ),
+                        )
+                      }
                     >
                       <SelectTrigger id={`txn-split-category-${index}`}>
                         <SelectValue />
@@ -452,7 +523,10 @@ export function TransactionForm({
                           <SelectItem
                             key={cat}
                             value={cat}
-                            disabled={splits.some((item, itemIndex) => itemIndex !== index && item.category === cat)}
+                            disabled={splits.some(
+                              (item, itemIndex) =>
+                                itemIndex !== index && item.category === cat,
+                            )}
                           >
                             {cat}
                           </SelectItem>
@@ -470,7 +544,15 @@ export function TransactionForm({
                       inputMode="decimal"
                       placeholder="0.00"
                       value={split.amount}
-                      onChange={(event) => setSplits((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, amount: event.target.value } : item))}
+                      onChange={(event) =>
+                        setSplits((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? { ...item, amount: event.target.value }
+                              : item,
+                          ),
+                        )
+                      }
                     />
                   </div>
                   <Button
@@ -480,7 +562,11 @@ export function TransactionForm({
                     className="h-10 w-10 text-muted-foreground hover:text-destructive"
                     aria-label={`Remove ${split.category} allocation`}
                     disabled={splits.length <= 2}
-                    onClick={() => setSplits((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+                    onClick={() =>
+                      setSplits((current) =>
+                        current.filter((_, itemIndex) => itemIndex !== index),
+                      )
+                    }
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -492,14 +578,23 @@ export function TransactionForm({
                 size="sm"
                 disabled={splits.length >= CATEGORIES.length}
                 onClick={() => {
-                  const nextCategory = CATEGORIES.find((cat) => !splits.some((split) => split.category === cat));
-                  if (nextCategory) {setSplits((current) => [...current, { category: nextCategory, amount: "" }]);}
+                  const nextCategory = CATEGORIES.find(
+                    (cat) => !splits.some((split) => split.category === cat),
+                  );
+                  if (nextCategory) {
+                    setSplits((current) => [
+                      ...current,
+                      { category: nextCategory, amount: "" },
+                    ]);
+                  }
                 }}
               >
                 <Plus className="h-4 w-4" /> Add category
               </Button>
               {amount && (
-                <p className={`text-xs ${unallocatedCents === 0 ? "text-income" : "text-muted-foreground"}`}>
+                <p
+                  className={`text-xs ${unallocatedCents === 0 ? "text-income" : "text-muted-foreground"}`}
+                >
                   {unallocatedCents === 0
                     ? "Fully allocated"
                     : unallocatedCents > 0
@@ -507,7 +602,9 @@ export function TransactionForm({
                       : `${formatCurrency(Math.abs(unallocatedCents) / 100)} over the total`}
                 </p>
               )}
-              {errors.splits && <p className="text-xs text-destructive">{errors.splits}</p>}
+              {errors.splits && (
+                <p className="text-xs text-destructive">{errors.splits}</p>
+              )}
             </div>
           )}
 

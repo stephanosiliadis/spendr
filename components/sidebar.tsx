@@ -37,10 +37,10 @@ function NavItem({
   label,
   onClick,
 }: {
-  href: string
-  icon: React.ElementType
-  label: string
-  onClick?: () => void
+  href: string;
+  icon: React.ElementType;
+  label: string;
+  onClick?: () => void;
 }) {
   const pathname = usePathname();
   const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -76,7 +76,7 @@ function SidebarBody({ onNavClick }: { onNavClick?: () => void }) {
           <Wallet className="h-5 w-5 text-secondary" />
         </div>
         <span className="font-brand text-xl font-semibold tracking-tight text-secondary">
-                Spendr
+          Spendr
         </span>
       </div>
 

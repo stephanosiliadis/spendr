@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { format, parseISO } from "date-fns";
 import {
   ArrowDown,
   ArrowUp,
@@ -17,6 +18,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/date-picker";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -68,25 +70,25 @@ const CATEGORY_EMOJI: Record<string, string> = {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type SortCol = "date" | "amount" | "type" | "category" | "id"
-type SortOrder = "asc" | "desc"
+type SortCol = "date" | "amount" | "type" | "category" | "id";
+type SortOrder = "asc" | "desc";
 
 interface Filters {
-  search: string
-  type: TransactionType | "all"
-  category: Category | "all"
-  dateFrom: string
-  dateTo: string
-  minAmount: string
-  maxAmount: string
-  sort: SortCol
-  order: SortOrder
+  search: string;
+  type: TransactionType | "all";
+  category: Category | "all";
+  dateFrom: string;
+  dateTo: string;
+  minAmount: string;
+  maxAmount: string;
+  sort: SortCol;
+  order: SortOrder;
 }
 
 interface TransactionsTableProps {
-  onEdit: (transaction: Transaction) => void
-  onDelete: (transaction: Transaction) => void
-  refreshKey?: number
+  onEdit: (transaction: Transaction) => void;
+  onDelete: (transaction: Transaction) => void;
+  refreshKey?: number;
 }
 
 const LIMIT = 20;
@@ -105,11 +107,23 @@ const DEFAULT_FILTERS: Filters = {
 
 // ─── Sort icon helper ─────────────────────────────────────────────────────────
 
-function SortIcon({ col, active, order }: { col: SortCol; active: SortCol; order: SortOrder }) {
-  if (active !== col) {return <ArrowUpDown className="h-3 w-3 opacity-40" />;}
-  return order === "asc"
-    ? <ArrowUp className="h-3 w-3 text-accent" />
-    : <ArrowDown className="h-3 w-3 text-accent" />;
+function SortIcon({
+  col,
+  active,
+  order,
+}: {
+  col: SortCol;
+  active: SortCol;
+  order: SortOrder;
+}) {
+  if (active !== col) {
+    return <ArrowUpDown className="h-3 w-3 opacity-40" />;
+  }
+  return order === "asc" ? (
+    <ArrowUp className="h-3 w-3 text-accent" />
+  ) : (
+    <ArrowDown className="h-3 w-3 text-accent" />
+  );
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -128,13 +142,17 @@ export function TransactionsTable({
 
   // Debounce search input
   useEffect(() => {
-    if (searchTimer.current) {clearTimeout(searchTimer.current);}
+    if (searchTimer.current) {
+      clearTimeout(searchTimer.current);
+    }
     searchTimer.current = setTimeout(() => {
       setDebouncedSearch(filters.search);
       setPage(1);
     }, 300);
     return () => {
-      if (searchTimer.current) {clearTimeout(searchTimer.current);}
+      if (searchTimer.current) {
+        clearTimeout(searchTimer.current);
+      }
     };
   }, [filters.search]);
 
@@ -146,17 +164,33 @@ export function TransactionsTable({
     q.set("limit", String(LIMIT));
     q.set("sort", filters.sort);
     q.set("order", filters.order);
-    if (debouncedSearch) {q.set("search", debouncedSearch);}
-    if (filters.type !== "all") {q.set("type", filters.type);}
-    if (filters.category !== "all") {q.set("category", filters.category);}
-    if (filters.dateFrom) {q.set("dateFrom", filters.dateFrom);}
-    if (filters.dateTo) {q.set("dateTo", filters.dateTo);}
-    if (filters.minAmount) {q.set("minAmount", filters.minAmount);}
-    if (filters.maxAmount) {q.set("maxAmount", filters.maxAmount);}
+    if (debouncedSearch) {
+      q.set("search", debouncedSearch);
+    }
+    if (filters.type !== "all") {
+      q.set("type", filters.type);
+    }
+    if (filters.category !== "all") {
+      q.set("category", filters.category);
+    }
+    if (filters.dateFrom) {
+      q.set("dateFrom", filters.dateFrom);
+    }
+    if (filters.dateTo) {
+      q.set("dateTo", filters.dateTo);
+    }
+    if (filters.minAmount) {
+      q.set("minAmount", filters.minAmount);
+    }
+    if (filters.maxAmount) {
+      q.set("maxAmount", filters.maxAmount);
+    }
 
     try {
       const res = await fetch(`/api/transactions?${q.toString()}`);
-      if (!res.ok) {throw new Error();}
+      if (!res.ok) {
+        throw new Error();
+      }
       setData(await res.json());
     } catch {
       setData(null);
@@ -184,7 +218,9 @@ export function TransactionsTable({
 
   const update = <K extends keyof Filters>(key: K, value: Filters[K]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
-    if (key !== "search") {setPage(1);}
+    if (key !== "search") {
+      setPage(1);
+    }
   };
 
   const clearFilters = () => {
@@ -210,11 +246,6 @@ export function TransactionsTable({
     filters.dateTo !== "" ||
     filters.minAmount !== "" ||
     filters.maxAmount !== "";
-
-  // ─── Shared date input class ────────────────────────────────────────────
-
-  const dateInputCls =
-    "h-9 w-36 rounded-md border border-input bg-background px-2.5 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:[color-scheme:dark]";
 
   // ─── Render ─────────────────────────────────────────────────────────────
 
@@ -294,18 +325,22 @@ export function TransactionsTable({
             <span className="text-xs text-muted-foreground whitespace-nowrap">
               Date:
             </span>
-            <input
-              type="date"
-              value={filters.dateFrom}
-              onChange={(e) => update("dateFrom", e.target.value)}
-              className={dateInputCls}
+            <DatePicker
+              date={filters.dateFrom ? parseISO(filters.dateFrom) : undefined}
+              onSelect={(date) =>
+                update("dateFrom", date ? format(date, "yyyy-MM-dd") : "")
+              }
+              placeholder="From date"
+              className="h-9 w-36"
             />
             <span className="text-xs text-muted-foreground">–</span>
-            <input
-              type="date"
-              value={filters.dateTo}
-              onChange={(e) => update("dateTo", e.target.value)}
-              className={dateInputCls}
+            <DatePicker
+              date={filters.dateTo ? parseISO(filters.dateTo) : undefined}
+              onSelect={(date) =>
+                update("dateTo", date ? format(date, "yyyy-MM-dd") : "")
+              }
+              placeholder="To date"
+              className="h-9 w-36"
             />
           </div>
 
@@ -346,7 +381,12 @@ export function TransactionsTable({
                   className="flex items-center gap-1 hover:text-foreground transition-colors"
                   onClick={() => toggleSort("id")}
                 >
-                  # <SortIcon col="id" active={filters.sort} order={filters.order} />
+                  #{" "}
+                  <SortIcon
+                    col="id"
+                    active={filters.sort}
+                    order={filters.order}
+                  />
                 </button>
               </TableHead>
               <TableHead className="w-28">
@@ -354,7 +394,12 @@ export function TransactionsTable({
                   className="flex items-center gap-1 hover:text-foreground transition-colors"
                   onClick={() => toggleSort("type")}
                 >
-                  Type <SortIcon col="type" active={filters.sort} order={filters.order} />
+                  Type{" "}
+                  <SortIcon
+                    col="type"
+                    active={filters.sort}
+                    order={filters.order}
+                  />
                 </button>
               </TableHead>
               <TableHead className="w-36">
@@ -362,7 +407,12 @@ export function TransactionsTable({
                   className="flex items-center gap-1 hover:text-foreground transition-colors"
                   onClick={() => toggleSort("amount")}
                 >
-                  Amount <SortIcon col="amount" active={filters.sort} order={filters.order} />
+                  Amount{" "}
+                  <SortIcon
+                    col="amount"
+                    active={filters.sort}
+                    order={filters.order}
+                  />
                 </button>
               </TableHead>
               <TableHead>Description</TableHead>
@@ -371,7 +421,12 @@ export function TransactionsTable({
                   className="flex items-center gap-1 hover:text-foreground transition-colors"
                   onClick={() => toggleSort("category")}
                 >
-                  Category <SortIcon col="category" active={filters.sort} order={filters.order} />
+                  Category{" "}
+                  <SortIcon
+                    col="category"
+                    active={filters.sort}
+                    order={filters.order}
+                  />
                 </button>
               </TableHead>
               <TableHead className="w-32">
@@ -379,7 +434,12 @@ export function TransactionsTable({
                   className="flex items-center gap-1 hover:text-foreground transition-colors"
                   onClick={() => toggleSort("date")}
                 >
-                  Date <SortIcon col="date" active={filters.sort} order={filters.order} />
+                  Date{" "}
+                  <SortIcon
+                    col="date"
+                    active={filters.sort}
+                    order={filters.order}
+                  />
                 </button>
               </TableHead>
               <TableHead className="w-24 text-center">Recurring</TableHead>
@@ -392,14 +452,30 @@ export function TransactionsTable({
               // Skeleton rows
               Array.from({ length: 8 }).map((_, i) => (
                 <TableRow key={i} className="hover:bg-transparent">
-                  <TableCell><Skeleton className="h-4 w-8" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-28 rounded-full" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                  <TableCell className="text-center"><Skeleton className="h-4 w-4 mx-auto rounded-full" /></TableCell>
-                  <TableCell className="text-right"><Skeleton className="h-7 w-16 ml-auto rounded-md" /></TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-8" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-48" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-28 rounded-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Skeleton className="h-4 w-4 mx-auto rounded-full" />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Skeleton className="h-7 w-16 ml-auto rounded-md" />
+                  </TableCell>
                 </TableRow>
               ))
             ) : !data || data.data.length === 0 ? (
@@ -458,7 +534,7 @@ export function TransactionsTable({
                           <TooltipTrigger asChild>
                             <span className="cursor-default text-sm">
                               {tx.description.length > 40
-                                ? `${tx.description.slice(0, 40)  }…`
+                                ? `${tx.description.slice(0, 40)}…`
                                 : tx.description}
                             </span>
                           </TooltipTrigger>
@@ -474,13 +550,20 @@ export function TransactionsTable({
                     {/* Category pill */}
                     <TableCell>
                       <span
-                        title={tx.splits?.map((split) => `${split.category}: ${formatCurrency(split.amount)}`).join(" · ")}
+                        title={tx.splits
+                          ?.map(
+                            (split) =>
+                              `${split.category}: ${formatCurrency(split.amount)}`,
+                          )
+                          .join(" · ")}
                         className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground"
                       >
                         <span className="leading-none">
                           {CATEGORY_EMOJI[tx.category] ?? "📦"}
                         </span>
-                        {tx.splits?.length ? `Split · ${tx.splits.length} categories` : tx.category}
+                        {tx.splits?.length
+                          ? `Split · ${tx.splits.length} categories`
+                          : tx.category}
                       </span>
                     </TableCell>
 

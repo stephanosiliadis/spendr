@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { format, parseISO } from "date-fns";
 import { CheckCircle2, Loader2, Plus, Target, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -17,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/date-picker";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import type { SavingsGoal } from "@/lib/types";
@@ -265,7 +267,13 @@ export default function SavingsGoalsPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="goal-date">Target date <span className="font-normal text-muted-foreground">(optional)</span></Label>
-                <Input id="goal-date" type="date" value={targetDate} onChange={(event) => setTargetDate(event.target.value)} />
+                <DatePicker
+                  id="goal-date"
+                  date={targetDate ? parseISO(targetDate) : undefined}
+                  onSelect={(date) => setTargetDate(date ? format(date, "yyyy-MM-dd") : "")}
+                  placeholder="Choose target date"
+                  className="w-full"
+                />
               </div>
               <Button type="submit" className="w-full" disabled={saving || loading || !name.trim() || !targetAmount}>
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}

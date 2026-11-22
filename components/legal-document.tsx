@@ -32,7 +32,9 @@ export function LegalDocument({
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
             Spendr · Legal
           </p>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h1>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            {title}
+          </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
             {description}
           </p>
@@ -79,7 +81,9 @@ export function LegalDocument({
                   {String(index + 1).padStart(2, "0")}
                 </div>
                 <div className="min-w-0 pt-1">
-                  <h2 className="text-lg font-semibold tracking-tight">{section.title}</h2>
+                  <h2 className="text-lg font-semibold tracking-tight">
+                    {section.title}
+                  </h2>
                   <p className="mt-2 text-sm leading-7 text-muted-foreground sm:text-[15px]">
                     {section.body}
                   </p>

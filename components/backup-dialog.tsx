@@ -277,8 +277,9 @@ export function BackupDialog({
         <DialogHeader>
           <DialogTitle>Backup &amp; restore</DialogTitle>
           <DialogDescription>
-            Back up all transactions, including recurring flags and IDs,
-            this browser&apos;s theme preference, budgets, category rules, and savings goals.
+            Back up all transactions, including recurring flags and IDs, this
+            browser&apos;s theme preference, budgets, category rules, and
+            savings goals.
           </DialogDescription>
         </DialogHeader>
 

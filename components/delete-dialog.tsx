@@ -19,10 +19,10 @@ import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { type Transaction } from "@/lib/types";
 
 interface DeleteDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  transaction: Transaction | null
-  onSuccess: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  transaction: Transaction | null;
+  onSuccess: () => void;
 }
 
 export function DeleteDialog({
@@ -34,25 +34,33 @@ export function DeleteDialog({
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
-    if (!transaction) {return;}
+    if (!transaction) {
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch(`/api/transactions/${transaction.id}`, {
         method: "DELETE",
       });
-      if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
       const { undoToken, undoExpiresAt } = await res.json();
       let restoring = false;
       const showUndo = () => {
         const remaining = undoExpiresAt - Date.now();
-        if (remaining <= 0) {return;}
+        if (remaining <= 0) {
+          return;
+        }
         toast.success("Transaction deleted", {
           duration: Math.min(15_000, remaining),
           description: "You can undo this deletion for up to one minute.",
           action: {
             label: "Undo",
             onClick: async () => {
-              if (restoring) {return;}
+              if (restoring) {
+                return;
+              }
               restoring = true;
               try {
                 const undoRes = await fetch("/api/transactions/undo", {
@@ -62,13 +70,19 @@ export function DeleteDialog({
                 });
                 if (!undoRes.ok) {
                   const data = await undoRes.json().catch(() => ({}));
-                  throw new Error(data.error ?? "Could not restore transaction.");
+                  throw new Error(
+                    data.error ?? "Could not restore transaction.",
+                  );
                 }
                 toast.success("Transaction restored");
                 onSuccess();
               } catch (error) {
                 onSuccess();
-                toast.error(error instanceof Error ? error.message : "Could not restore transaction.");
+                toast.error(
+                  error instanceof Error
+                    ? error.message
+                    : "Could not restore transaction.",
+                );
                 // A failed request can be retried while the server-side token is valid.
                 showUndo();
               } finally {
@@ -88,7 +102,9 @@ export function DeleteDialog({
     }
   };
 
-  if (!transaction) {return null;}
+  if (!transaction) {
+    return null;
+  }
 
   const isIncome = transaction.type === "Income";
 
@@ -103,8 +119,8 @@ export function DeleteDialog({
             <AlertDialogTitle>Delete Transaction?</AlertDialogTitle>
           </div>
           <AlertDialogDescription>
-            The following transaction will be removed from your records.
-            An Undo action will appear after deletion and remain visible for 15 seconds.
+            The following transaction will be removed from your records. An Undo
+            action will appear after deletion and remain visible for 15 seconds.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -138,7 +154,8 @@ export function DeleteDialog({
               {transaction.description}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              {formatDate(transaction.date)}&ensp;·&ensp;{transaction.splits?.length
+              {formatDate(transaction.date)}&ensp;·&ensp;
+              {transaction.splits?.length
                 ? `Split across ${transaction.splits.length} categories`
                 : transaction.category}
               {transaction.is_recurring ? "\u00a0· Recurring" : ""}

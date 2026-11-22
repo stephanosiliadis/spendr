@@ -8,8 +8,8 @@ import type { Insights } from "@/lib/types";
 import { cn, formatCurrency } from "@/lib/utils";
 
 interface StatsCardsProps {
-  insights: Insights | null
-  loading?: boolean
+  insights: Insights | null;
+  loading?: boolean;
 }
 
 export function StatsCards({ insights, loading }: StatsCardsProps) {
@@ -70,34 +70,33 @@ export function StatsCards({ insights, loading }: StatsCardsProps) {
 
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-      {cards.map(({ label, value, icon: Icon, iconBg, iconColor, valueColor }) => (
-        <Card
-          key={label}
-          className="p-5 transition-shadow hover:shadow-md"
-        >
-          <div className="flex items-start gap-4">
-            <div
-              className={cn(
-                "flex h-11 w-11 shrink-0 items-center justify-center rounded-full",
-                iconBg,
-              )}
-            >
-              <Icon className={cn("h-5 w-5", iconColor)} />
-            </div>
-            <div className="min-w-0">
-              <p
+      {cards.map(
+        ({ label, value, icon: Icon, iconBg, iconColor, valueColor }) => (
+          <Card key={label} className="p-5 transition-shadow hover:shadow-md">
+            <div className="flex items-start gap-4">
+              <div
                 className={cn(
-                  "truncate text-xl font-bold leading-tight tracking-tight",
-                  valueColor,
+                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-full",
+                  iconBg,
                 )}
               >
-                {value}
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>
+                <Icon className={cn("h-5 w-5", iconColor)} />
+              </div>
+              <div className="min-w-0">
+                <p
+                  className={cn(
+                    "truncate text-xl font-bold leading-tight tracking-tight",
+                    valueColor,
+                  )}
+                >
+                  {value}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>
+              </div>
             </div>
-          </div>
-        </Card>
-      ))}
+          </Card>
+        ),
+      )}
     </div>
   );
 }

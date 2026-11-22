@@ -27,7 +27,9 @@ function CustomTooltip({
   active?: boolean;
   payload?: Array<{ payload: CategoryData }>;
 }) {
-  if (!active || !payload?.length) {return null;}
+  if (!active || !payload?.length) {
+    return null;
+  }
   const d = payload[0].payload;
 
   return (

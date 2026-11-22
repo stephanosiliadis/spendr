@@ -6,6 +6,7 @@ import { Loader2, Plus, Trash2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { MonthPicker } from "@/components/month-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -124,12 +125,11 @@ export default function BudgetsPage() {
         </div>
         <div className="w-full sm:w-48">
           <Label htmlFor="budget-month" className="sr-only">Budget month</Label>
-          <Input
+          <MonthPicker
             id="budget-month"
-            type="month"
             value={month}
             max={currentMonth()}
-            onChange={(event) => setMonth(event.target.value || currentMonth())}
+            onChange={setMonth}
           />
         </div>
       </header>

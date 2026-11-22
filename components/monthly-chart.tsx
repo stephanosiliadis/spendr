@@ -18,8 +18,8 @@ import type { MonthlyData } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 
 interface MonthlyChartProps {
-  data: MonthlyData[]
-  loading?: boolean
+  data: MonthlyData[];
+  loading?: boolean;
 }
 
 function CustomTooltip({
@@ -27,11 +27,13 @@ function CustomTooltip({
   payload,
   label,
 }: {
-  active?: boolean
-  payload?: Array<{ name: string; value: number; color: string }>
-  label?: string
+  active?: boolean;
+  payload?: Array<{ name: string; value: number; color: string }>;
+  label?: string;
 }) {
-  if (!active || !payload?.length) {return null;}
+  if (!active || !payload?.length) {
+    return null;
+  }
 
   return (
     <div className="min-w-[180px] rounded-lg border border-border bg-card p-3 shadow-xl">
@@ -53,7 +55,9 @@ function CustomTooltip({
 
 function yAxisFormatter(v: number): string {
   const abs = Math.abs(v);
-  if (abs >= 1000) {return `€${(v / 1000).toFixed(0)}k`;}
+  if (abs >= 1000) {
+    return `€${(v / 1000).toFixed(0)}k`;
+  }
   return `€${v}`;
 }
 
@@ -117,7 +121,10 @@ export function MonthlyChart({ data, loading }: MonthlyChartProps) {
               tickFormatter={yAxisFormatter}
               width={52}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.5 }} />
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ fill: "hsl(var(--muted))", opacity: 0.5 }}
+            />
             <Legend
               iconType="circle"
               iconSize={8}
