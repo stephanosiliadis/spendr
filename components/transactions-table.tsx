@@ -85,7 +85,7 @@ const DEFAULT_FILTERS: Filters = {
   dateTo: "",
   minAmount: "",
   maxAmount: "",
-  sort: "date",
+  sort: "id",
   order: "desc",
 };
 
