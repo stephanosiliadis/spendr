@@ -19,7 +19,10 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -135,6 +138,14 @@ export function TransactionForm({
           seen.add(key);
           return true;
         });
+        // Alphabetical by description, so templates are easy to scan.
+        templates.sort(
+          (a, b) =>
+            a.description.localeCompare(b.description, undefined, {
+              sensitivity: "base",
+              numeric: true,
+            }) || a.amount - b.amount,
+        );
         if (!controller.signal.aborted) {
           setRecurringTransactions(templates);
         }
@@ -272,12 +283,12 @@ export function TransactionForm({
       <DialogContent className="sm:max-w-md max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Transaction" : "Add Transaction"}
+            {isEditing ? "Edit transaction" : "Add transaction"}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the details for this transaction."
-              : "Fill in the details to record a new transaction."}
+              ? "Change any detail, then save."
+              : "Record income or an expense."}
           </DialogDescription>
         </DialogHeader>
 
@@ -299,12 +310,33 @@ export function TransactionForm({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="new">Start from scratch</SelectItem>
-                  {recurringTransactions.map((tx) => (
-                    <SelectItem key={tx.id} value={String(tx.id)}>
-                      {tx.description} · {formatCurrency(tx.amount)} · {tx.type}{" "}
-                      · {tx.category}
-                    </SelectItem>
-                  ))}
+                  {(
+                    [
+                      ["Income", "Income"],
+                      ["Expense", "Expenses"],
+                    ] as const
+                  ).map(([groupType, groupLabel], groupIndex) => {
+                    const group = recurringTransactions.filter(
+                      (tx) => tx.type === groupType,
+                    );
+                    if (group.length === 0) {
+                      return null;
+                    }
+                    return (
+                      <SelectGroup key={groupType}>
+                        {groupIndex > 0 && recurringTransactions.some((tx) => tx.type === "Income") && (
+                          <SelectSeparator />
+                        )}
+                        <SelectLabel>{groupLabel}</SelectLabel>
+                        {group.map((tx) => (
+                          <SelectItem key={tx.id} value={String(tx.id)}>
+                            {tx.description} · {formatCurrency(tx.amount)} ·{" "}
+                            {tx.category}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    );
+                  })}
                 </SelectContent>
               </Select>
               <p
@@ -343,13 +375,13 @@ export function TransactionForm({
               <SelectContent>
                 <SelectItem value="Income">
                   <span className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-income shrink-0" />
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-income" />
                     Income
                   </span>
                 </SelectItem>
                 <SelectItem value="Expense">
                   <span className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-expense shrink-0" />
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-expense" />
                     Expense
                   </span>
                 </SelectItem>
@@ -390,7 +422,7 @@ export function TransactionForm({
             <Label htmlFor="txn-desc">Description</Label>
             <Input
               id="txn-desc"
-              placeholder="What was this for?"
+              placeholder="Groceries, rent, salary"
               className={cn(
                 errors.description &&
                   "border-destructive focus-visible:ring-destructive",
@@ -639,7 +671,7 @@ export function TransactionForm({
             </Button>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isEditing ? "Save Changes" : "Add Transaction"}
+              {isEditing ? "Save changes" : "Add transaction"}
             </Button>
           </DialogFooter>
         </form>

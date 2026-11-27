@@ -130,7 +130,7 @@ export default function SavingsGoalsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6 pt-20 lg:pt-6">
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 p-4 pt-20 sm:p-6 sm:pt-20 lg:p-8">
       <header>
         <h1 className="text-2xl font-bold">Savings goals</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -141,7 +141,7 @@ export default function SavingsGoalsPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <CardContent className="flex items-center gap-4 p-5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10 text-accent">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-highlight/10 text-highlight">
               <Target className="h-5 w-5" />
             </div>
             <div>
@@ -176,7 +176,7 @@ export default function SavingsGoalsPage() {
               </div>
             ) : goals.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border px-5 py-10 text-center">
-                <Target className="mx-auto h-7 w-7 text-accent" />
+                <Target className="mx-auto h-7 w-7 text-highlight" />
                 <p className="mt-3 font-medium">Start with a savings goal</p>
                 <p className="mt-1 text-sm text-muted-foreground">Create a target and record contributions as you save.</p>
               </div>
@@ -189,7 +189,7 @@ export default function SavingsGoalsPage() {
                     <Card key={goal.id} className="border-border/80 shadow-none">
                       <CardContent className="space-y-4 p-4 sm:p-5">
                         <div className="flex items-start gap-3">
-                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${complete ? "bg-income/10 text-income" : "bg-accent/10 text-accent"}`}>
+                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${complete ? "bg-income/10 text-income" : "bg-highlight/10 text-highlight"}`}>
                             {complete ? <CheckCircle2 className="h-4 w-4" /> : <Target className="h-4 w-4" />}
                           </div>
                           <div className="min-w-0 flex-1">
@@ -214,7 +214,7 @@ export default function SavingsGoalsPage() {
                           <p className="text-sm font-semibold tabular-nums">{formatCurrency(goal.currentAmount)} <span className="font-normal text-muted-foreground">saved</span></p>
                           <p className="text-xs tabular-nums text-muted-foreground">Target {formatCurrency(goal.targetAmount)}</p>
                         </div>
-                        <Progress value={percentage} indicatorClassName={complete ? "bg-income" : "bg-accent"} />
+                        <Progress value={percentage} indicatorClassName={complete ? "bg-income" : "bg-highlight"} />
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-xs font-medium text-muted-foreground">{percentage}% complete</span>
                           <form

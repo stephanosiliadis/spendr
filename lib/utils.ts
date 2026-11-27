@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(amount: number, currency = "EUR"): string {
-  return new Intl.NumberFormat("de-DE", {
+  return new Intl.NumberFormat("en-IE", {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
@@ -16,11 +16,14 @@ export function formatCurrency(amount: number, currency = "EUR"): string {
 
 export function formatDate(dateStr: string): string {
   const date = new Date(`${dateStr  }T00:00:00`);
-  return date.toLocaleDateString("en-GB", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  // en-GB renders September as "Sept"; keep every month at three letters.
+  return date
+    .toLocaleDateString("en-GB", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })
+    .replace("Sept", "Sep");
 }
 
 export function formatDateInput(date: Date): string {

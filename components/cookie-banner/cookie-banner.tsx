@@ -28,13 +28,17 @@ function CookieBanner() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-screen-md items-center gap-3 px-4 py-3">
-        <span className="text-sm text-foreground">
-          We use cookies to improve your experience. Please accept for
-          analytics and personalization features.
-        </span>
-        <div className="flex gap-2">
+    <div
+      role="region"
+      aria-label="Cookie preferences"
+      className="fixed inset-x-4 bottom-4 z-50 rounded-xl border border-border bg-card p-4 shadow-xl shadow-black/10 sm:left-auto sm:right-4 sm:w-[400px]"
+    >
+      <div className="flex flex-col gap-3">
+        <p className="text-sm leading-6">
+          We use cookies to improve your experience. Accept to allow analytics
+          and personalization.
+        </p>
+        <div className="flex justify-end gap-2">
           <Button
             variant="outline"
             size="sm"

@@ -39,13 +39,13 @@ export function ThemeToggle() {
         <Button
           variant="ghost"
           size="sm"
-          className="gap-2"
+          className="w-full justify-start gap-2.5 px-2.5 font-normal text-muted-foreground hover:text-foreground"
           disabled={!mounted}
           aria-label={
             mounted ? `Theme: ${label}. Change theme` : "Change theme"
           }
         >
-          <Icon className="h-4 w-4" aria-hidden="true" />
+          <Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
           <span>{label}</span>
         </Button>
       </DropdownMenuTrigger>

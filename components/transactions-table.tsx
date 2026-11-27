@@ -45,28 +45,12 @@ import {
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import {
   CATEGORIES,
+  CATEGORY_COLORS,
   type Category,
   type PaginatedTransactions,
   type Transaction,
   type TransactionType,
 } from "@/lib/types";
-
-// ─── Category decoration ────────────────────────────────────────────────────
-
-const CATEGORY_EMOJI: Record<string, string> = {
-  "Food & Dining": "🍽️",
-  Transport: "🚗",
-  Entertainment: "🎬",
-  "Health & Medical": "💊",
-  Shopping: "🛍️",
-  "Bills & Utilities": "💡",
-  Salary: "💰",
-  Investment: "📈",
-  Housing: "🏠",
-  Education: "📚",
-  Travel: "✈️",
-  Other: "📦",
-};
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -120,9 +104,9 @@ function SortIcon({
     return <ArrowUpDown className="h-3 w-3 opacity-40" />;
   }
   return order === "asc" ? (
-    <ArrowUp className="h-3 w-3 text-accent" />
+    <ArrowUp className="h-3 w-3 text-highlight" />
   ) : (
-    <ArrowDown className="h-3 w-3 text-accent" />
+    <ArrowDown className="h-3 w-3 text-highlight" />
   );
 }
 
@@ -300,7 +284,13 @@ export function TransactionsTable({
               <SelectItem value="all">All Categories</SelectItem>
               {CATEGORIES.map((cat) => (
                 <SelectItem key={cat} value={cat}>
-                  {CATEGORY_EMOJI[cat]} {cat}
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: CATEGORY_COLORS[cat] }}
+                    />
+                    {cat}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -556,13 +546,15 @@ export function TransactionsTable({
                               `${split.category}: ${formatCurrency(split.amount)}`,
                           )
                           .join(" · ")}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground"
+                        className="inline-flex items-center gap-2 text-sm text-muted-foreground"
                       >
-                        <span className="leading-none">
-                          {CATEGORY_EMOJI[tx.category] ?? "📦"}
-                        </span>
+                        <span
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ backgroundColor: CATEGORY_COLORS[tx.category] ?? "hsl(var(--muted-foreground))" }}
+                          aria-hidden="true"
+                        />
                         {tx.splits?.length
-                          ? `Split · ${tx.splits.length} categories`
+                          ? `Split across ${tx.splits.length}`
                           : tx.category}
                       </span>
                     </TableCell>
@@ -578,7 +570,7 @@ export function TransactionsTable({
                         <TooltipProvider delayDuration={400}>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <RefreshCw className="h-3.5 w-3.5 text-accent mx-auto" />
+                              <RefreshCw className="h-3.5 w-3.5 text-highlight mx-auto" />
                             </TooltipTrigger>
                             <TooltipContent>Recurring</TooltipContent>
                           </Tooltip>
@@ -590,7 +582,7 @@ export function TransactionsTable({
 
                     {/* Actions */}
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-0.5 transition-opacity lg:opacity-0 lg:group-focus-within:opacity-100 lg:group-hover:opacity-100">
                         <Button
                           variant="ghost"
                           size="icon"

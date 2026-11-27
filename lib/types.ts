@@ -29,18 +29,18 @@ export interface CategoryBudgetStatus extends CategoryBudget {
 }
 
 export const CATEGORY_COLORS: Record<Category, string> = {
-  "Food & Dining": "#c4774f",
-  Transport: "#557da5",
-  Entertainment: "#8572a4",
-  "Health & Medical": "#bd6262",
-  Shopping: "#ad6881",
-  "Bills & Utilities": "#a98a45",
-  Salary: "#528565",
-  Investment: "#4e8992",
-  Housing: "#687789",
-  Education: "#697ba3",
-  Travel: "#4e8b7e",
-  Other: "#8290a1",
+  "Food & Dining": "#E9825A",
+  Transport: "#5BA4E6",
+  Entertainment: "#8E7CE8",
+  "Health & Medical": "#E5617C",
+  Shopping: "#E8B04A",
+  "Bills & Utilities": "#3FB8C9",
+  Salary: "#3FB985",
+  Investment: "#5B6EE8",
+  Housing: "#B08968",
+  Education: "#C46FD0",
+  Travel: "#EC8FB5",
+  Other: "#94A3B8",
 };
 
 export interface Transaction {

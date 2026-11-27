@@ -67,7 +67,7 @@ export default function DashboardPage() {
       try {
         const [insRes, txRes] = await Promise.all([
           fetch("/api/insights"),
-          fetch("/api/transactions?limit=5&sort=date&order=desc"),
+          fetch("/api/transactions?limit=5&sort=id&order=desc"),
         ]);
         const [insData, txData] = await Promise.all([
           insRes.json(),
@@ -90,7 +90,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6 pt-20 lg:pt-6 animate-fade-in">
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 p-4 pt-20 sm:p-6 sm:pt-20 lg:p-8 animate-fade-in">
       {/* ── Page header ───────────────────────────────────────────── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -109,11 +109,11 @@ export default function DashboardPage() {
       <StatsCards insights={insights} loading={loading} />
 
       {/* ── Charts grid ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <MonthlyChart data={insights?.monthlyData ?? []} loading={loading} />
         <CategoryChart
           data={insights?.expenseCategoryData ?? []}
-          title="Expense Breakdown"
+          title="Where it went"
           loading={loading}
         />
       </div>
@@ -197,7 +197,7 @@ export default function DashboardPage() {
                       {tx.is_recurring === 1 && (
                         <>
                           <span>·</span>
-                          <span className="text-accent">Recurring</span>
+                          <span className="text-highlight">Recurring</span>
                         </>
                       )}
                     </p>

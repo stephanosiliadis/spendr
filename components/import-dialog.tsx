@@ -463,7 +463,7 @@ export function ImportDialog({
                 setServerError("");
               }}
               aria-describedby="import-duplicate-help"
-              className="mt-0.5 h-4 w-4 accent-primary"
+              className="mt-0.5 h-4 w-4 accent-secondary"
             />
             <div className="space-y-1">
               <Label

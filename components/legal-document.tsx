@@ -24,9 +24,9 @@ export function LegalDocument({
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-12 pt-20 sm:px-6 lg:px-10 lg:py-10">
       <header className="relative mb-8 overflow-hidden rounded-2xl border border-border bg-card px-6 py-8 shadow-sm sm:px-9 sm:py-10">
-        <div className="pointer-events-none absolute -right-10 -top-20 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-10 -top-20 h-64 w-64 rounded-full bg-highlight/10 blur-3xl" />
         <div className="relative max-w-3xl">
-          <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/15 text-accent">
+          <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-highlight/15 text-highlight">
             <Icon className="h-6 w-6" aria-hidden="true" />
           </div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
@@ -56,7 +56,7 @@ export function LegalDocument({
                       href={`#section-${index + 1}`}
                       className="group flex items-start gap-2 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                     >
-                      <span className="mt-0.5 w-5 shrink-0 text-[11px] font-semibold tabular-nums text-accent">
+                      <span className="mt-0.5 w-5 shrink-0 text-[11px] font-semibold tabular-nums text-highlight">
                         {String(index + 1).padStart(2, "0")}
                       </span>
                       <span>{section.title}</span>

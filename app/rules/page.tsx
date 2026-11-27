@@ -78,7 +78,7 @@ export default function CategoryRulesPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6 pt-20 lg:pt-6">
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 p-4 pt-20 sm:p-6 sm:pt-20 lg:p-8">
       <header>
         <h1 className="text-2xl font-bold">Category rules</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -102,7 +102,7 @@ export default function CategoryRulesPage() {
               </div>
             ) : rules.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border px-5 py-10 text-center">
-                <WandSparkles className="mx-auto h-7 w-7 text-accent" />
+                <WandSparkles className="mx-auto h-7 w-7 text-highlight" />
                 <p className="mt-3 font-medium">No category rules yet</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   For example, match “Metro” to Transport or “Netflix” to Entertainment.
@@ -112,7 +112,7 @@ export default function CategoryRulesPage() {
               <div className="divide-y divide-border">
                 {rules.map((rule) => (
                   <div key={rule.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-highlight/10 text-highlight">
                       <WandSparkles className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">

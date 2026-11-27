@@ -62,8 +62,8 @@ export function StatsCards({ insights, loading }: StatsCardsProps) {
       label: "Transactions",
       value: (insights.transactionCount ?? 0).toLocaleString(),
       icon: Receipt,
-      iconBg: "bg-accent/20",
-      iconColor: "text-accent",
+      iconBg: "bg-highlight/20",
+      iconColor: "text-highlight",
       valueColor: "text-foreground",
     },
   ];

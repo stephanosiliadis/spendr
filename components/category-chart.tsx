@@ -1,14 +1,5 @@
 "use client";
 
-import {
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CATEGORY_COLORS, type CategoryData } from "@/lib/types";
@@ -20,58 +11,27 @@ interface CategoryChartProps {
   loading?: boolean;
 }
 
-function CustomTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: Array<{ payload: CategoryData }>;
-}) {
-  if (!active || !payload?.length) {
-    return null;
-  }
-  const d = payload[0].payload;
+const MAX_ROWS = 8;
 
-  return (
-    <div className="min-w-[160px] rounded-lg border border-border bg-card p-3 shadow-xl">
-      <p className="mb-1.5 text-sm font-semibold">{d.category}</p>
-      <p className="text-sm text-muted-foreground">
-        Amount:{" "}
-        <span className="font-medium text-foreground">
-          {formatCurrency(d.amount)}
-        </span>
-      </p>
-      <p className="text-sm text-muted-foreground">
-        Share:{" "}
-        <span className="font-medium text-foreground">
-          {d.percentage.toFixed(1)}%
-        </span>
-      </p>
-      <p className="text-sm text-muted-foreground">
-        Transactions:{" "}
-        <span className="font-medium text-foreground">{d.count}</span>
-      </p>
-    </div>
-  );
-}
-
-function LegendText({ value }: { value: string }) {
-  return <span className="text-xs text-muted-foreground">{value}</span>;
-}
-
+/**
+ * Ranked list with thin bars. A share-of-total reads better as a sorted list
+ * than as a donut, and it stays legible at any category count.
+ */
 export function CategoryChart({
   data,
-  title = "Category Breakdown",
+  title = "Categories",
   loading,
 }: CategoryChartProps) {
   if (loading) {
     return (
       <Card>
         <CardHeader>
-          <Skeleton className="h-5 w-44" />
+          <Skeleton className="h-5 w-32" />
         </CardHeader>
-        <CardContent>
-          <Skeleton className="mx-auto h-64 w-64 rounded-full" />
+        <CardContent className="space-y-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-8 w-full" />
+          ))}
         </CardContent>
       </Card>
     );
@@ -81,54 +41,70 @@ export function CategoryChart({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">{title}</CardTitle>
+          <CardTitle>{title}</CardTitle>
         </CardHeader>
-        <CardContent className="flex h-64 items-center justify-center">
-          <p className="text-sm text-muted-foreground">No data available</p>
+        <CardContent className="flex h-48 items-center justify-center">
+          <p className="text-sm text-muted-foreground">Nothing to rank yet</p>
         </CardContent>
       </Card>
     );
   }
 
+  const rows = data.slice(0, MAX_ROWS);
+  const rest = data.slice(MAX_ROWS);
+  const restAmount = rest.reduce((sum, row) => sum + row.amount, 0);
+  const top = rows[0].amount || 1;
+
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{title}</CardTitle>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={288}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="45%"
-              innerRadius={64}
-              outerRadius={100}
-              dataKey="amount"
-              nameKey="category"
-              paddingAngle={2}
-              strokeWidth={0}
-            >
-              {data.map((entry) => (
-                <Cell
-                  key={entry.category}
-                  fill={
-                    CATEGORY_COLORS[
-                      entry.category as keyof typeof CATEGORY_COLORS
-                    ] ?? "#94a3b8"
-                  }
+        <ul className="space-y-3">
+          {rows.map((row) => (
+            <li key={row.category}>
+              <div className="flex items-baseline text-sm">
+                <span
+                  className="mr-2 h-2 w-2 shrink-0 self-center rounded-full"
+                  style={{
+                    backgroundColor:
+                      CATEGORY_COLORS[row.category as keyof typeof CATEGORY_COLORS] ?? "hsl(var(--muted-foreground))",
+                  }}
+                  aria-hidden="true"
                 />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend
-              formatter={(value) => <LegendText value={value} />}
-              iconType="circle"
-              iconSize={8}
-              wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+                <span className="truncate">{row.category}</span>
+                <span className="leader" aria-hidden="true" />
+                <span className="figure">{formatCurrency(row.amount)}</span>
+                <span className="figure w-11 text-right text-xs text-muted-foreground">
+                  {row.percentage}%
+                </span>
+              </div>
+              <div
+                className="mt-1.5 h-1 overflow-hidden rounded-full bg-muted"
+                role="img"
+                aria-label={`${row.category}: ${row.percentage}% of total, ${row.count} transactions`}
+              >
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${Math.max(2, (row.amount / top) * 100)}%`,
+                    backgroundColor:
+                      CATEGORY_COLORS[row.category as keyof typeof CATEGORY_COLORS] ?? "hsl(var(--muted-foreground))",
+                  }}
+                />
+              </div>
+            </li>
+          ))}
+          {rest.length > 0 && (
+            <li className="flex items-baseline pt-1 text-sm text-muted-foreground">
+              <span>{rest.length} more</span>
+              <span className="leader" aria-hidden="true" />
+              <span className="figure">{formatCurrency(restAmount)}</span>
+              <span className="w-11" />
+            </li>
+          )}
+        </ul>
       </CardContent>
     </Card>
   );

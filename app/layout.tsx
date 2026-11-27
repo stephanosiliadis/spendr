@@ -1,25 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Space_Grotesk } from "next/font/google";
+import "@fontsource-variable/dm-sans";
+import "@fontsource-variable/space-grotesk";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { Sidebar } from "@/components/sidebar";
 import { CookieBanner } from "@/components/cookie-banner/cookie-banner";
 
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  display: "swap",
-});
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-brand",
-  display: "swap",
-});
-
 export const metadata: Metadata = {
-  title: "Spendr — Smart Expense Tracker",
-  description: "Track your income and expenses with beautiful insights.",
+  title: "Spendr",
+  description: "Income, spending, budgets and savings goals in one private ledger.",
   icons: {
     icon: "/spendr-favicon.png",
     apple: "/spendr-favicon.png",
@@ -28,7 +18,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#171717",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5f7fa" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1218" },
+  ],
 };
 
 export default function RootLayout({
@@ -38,16 +31,22 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${dmSans.variable} ${spaceGrotesk.variable} font-sans`}>
+      <body className="font-sans">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-card focus:px-3 focus:py-2 focus:text-sm focus:shadow-md"
+          >
+            Skip to content
+          </a>
           <div className="flex min-h-screen">
             <Sidebar />
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden pt-4">
+            <main id="main" className="flex min-w-0 flex-1 flex-col overflow-hidden">
               {children}
               <CookieBanner />
             </main>

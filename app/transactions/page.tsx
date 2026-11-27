@@ -60,7 +60,7 @@ export default function TransactionsPage() {
   return (
     <div className="flex flex-col h-full">
       {/* ── Page header ────────────────────────────────────────────────── */}
-      <header className="shrink-0 border-b border-border px-6 py-5">
+      <header className="shrink-0 border-b border-border px-4 pb-5 pt-[4.5rem] sm:px-6 lg:pt-5">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">

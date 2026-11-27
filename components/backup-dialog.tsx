@@ -372,7 +372,7 @@ export function BackupDialog({
                     checked={confirmed}
                     disabled={!!operation}
                     onChange={(event) => setConfirmed(event.target.checked)}
-                    className="mt-1 h-4 w-4 shrink-0 accent-primary"
+                    className="mt-1 h-4 w-4 shrink-0 accent-secondary"
                   />
                   <span>
                     I understand this will replace current transactions,

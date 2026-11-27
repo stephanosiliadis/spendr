@@ -115,7 +115,7 @@ export default function BudgetsPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6 p-6 pt-20 lg:pt-6">
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 p-4 pt-20 sm:p-6 sm:pt-20 lg:p-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Budgets</h1>
@@ -148,7 +148,7 @@ export default function BudgetsPage() {
         </Card>
         <Card>
           <CardContent className="flex items-center gap-4 p-5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10 text-accent">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-highlight/10 text-highlight">
               <Plus className="h-5 w-5" />
             </div>
             <div>
@@ -203,7 +203,7 @@ export default function BudgetsPage() {
                       </div>
                       <Progress
                         value={progress}
-                        indicatorClassName={overBudget ? "bg-expense" : budget.percentage >= 80 ? "bg-secondary" : "bg-accent"}
+                        indicatorClassName={overBudget ? "bg-expense" : budget.percentage >= 80 ? "bg-secondary" : "bg-highlight"}
                       />
                       <p className="text-right text-[11px] text-muted-foreground">{budget.percentage}% used</p>
                     </div>

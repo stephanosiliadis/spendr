@@ -130,16 +130,16 @@ function KeyInsights({
     {
       label: "Average Amount",
       icon: Wallet,
-      iconClass: "text-accent",
-      bgClass: "bg-accent/15",
+      iconClass: "text-highlight",
+      bgClass: "bg-highlight/15",
       value: formatCurrency(insights.averageAmount),
       sub: `Across ${insights.transactionCount} transaction${insights.transactionCount !== 1 ? "s" : ""}`,
     },
     {
       label: "Recurring",
       icon: RefreshCw,
-      iconClass: "text-accent",
-      bgClass: "bg-accent/15",
+      iconClass: "text-highlight",
+      bgClass: "bg-highlight/15",
       value: `${insights.recurringCount}`,
       sub:
         insights.recurringCount === 1
@@ -223,7 +223,7 @@ export default function InsightsPage() {
     : "Choose dates";
 
   return (
-    <div className="flex flex-col gap-6 p-6 pt-20 lg:pt-6 animate-fade-in">
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 p-4 pt-20 sm:p-6 sm:pt-20 lg:p-8 animate-fade-in">
       {/* ── Page header ─────────────────────────────────────────────── */}
       <div>
         <h1 className="text-2xl font-bold">Analytics</h1>
@@ -234,7 +234,7 @@ export default function InsightsPage() {
 
       <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 text-accent">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-highlight/10 text-highlight">
             <CalendarDays className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -8,12 +8,9 @@ import {
   BarChart3,
   LayoutDashboard,
   Menu,
-  FileText,
   PiggyBank,
   Tags,
-  Shield,
   Target,
-  Wallet,
   X,
 } from "lucide-react";
 
@@ -27,9 +24,42 @@ const navLinks = [
   { href: "/budgets", icon: PiggyBank, label: "Budgets" },
   { href: "/rules", icon: Tags, label: "Category rules" },
   { href: "/goals", icon: Target, label: "Savings goals" },
-  { href: "/privacy-policy", icon: Shield, label: "Privacy Policy" },
-  { href: "/terms-page", icon: FileText, label: "Terms" },
 ] as const;
+
+const legalLinks = [
+  { href: "/privacy-policy", label: "Privacy" },
+  { href: "/terms-page", label: "Terms" },
+] as const;
+
+const allLinks = [
+  ...navLinks,
+  { href: "/privacy-policy", label: "Privacy Policy" },
+  { href: "/terms-page", label: "Terms" },
+];
+
+/** Two ledger rules, one longer: the Spendr mark. */
+function Mark({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      className={cn("h-5 w-5 shrink-0", className)}
+      aria-hidden="true"
+    >
+      <rect width="20" height="20" rx="6" className="fill-secondary" />
+      <rect x="5" y="6.5" width="10" height="1.75" rx=".875" className="fill-secondary-foreground" />
+      <rect x="5" y="11.75" width="6.5" height="1.75" rx=".875" className="fill-secondary-foreground" />
+    </svg>
+  );
+}
+
+function Wordmark() {
+  return (
+    <span className="flex items-center gap-2.5">
+      <Mark />
+      <span className="font-brand text-xl font-semibold tracking-tight text-secondary">Spendr</span>
+    </span>
+  );
+}
 
 function NavItem({
   href,
@@ -49,42 +79,39 @@ function NavItem({
     <Link
       href={href}
       onClick={onClick}
+      aria-current={isActive ? "page" : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
+        "flex h-8 items-center gap-2.5 rounded-md px-2.5 text-sm transition-colors",
         isActive
-          ? "bg-secondary/15 text-secondary"
-          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+          ? "bg-secondary/10 font-medium text-secondary"
+          : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
       )}
     >
-      <Icon
-        className={cn(
-          "h-5 w-5 shrink-0 transition-colors",
-          isActive ? "text-secondary" : "",
-        )}
-      />
+      <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
       {label}
     </Link>
   );
 }
 
-function SidebarBody({ onNavClick }: { onNavClick?: () => void }) {
+function SidebarBody({
+  onNavClick,
+  showBrand = true,
+}: {
+  onNavClick?: () => void;
+  showBrand?: boolean;
+}) {
+  const pathname = usePathname();
   return (
     <>
-      {/* Logo */}
-      <div className="flex items-center gap-3 border-b border-border px-5 py-5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary/15">
-          <Wallet className="h-5 w-5 text-secondary" />
+      {showBrand && (
+        <div className="flex h-14 items-center px-5">
+          <Link href="/" onClick={onNavClick} aria-label="Spendr dashboard">
+            <Wordmark />
+          </Link>
         </div>
-        <span className="font-brand text-xl font-semibold tracking-tight text-secondary">
-          Spendr
-        </span>
-      </div>
+      )}
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-        <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-          Menu
-        </p>
+      <nav aria-label="Main" className="flex-1 space-y-0.5 overflow-y-auto px-3 pt-2">
         {navLinks.map((link) => (
           <NavItem
             key={link.href}
@@ -96,10 +123,25 @@ function SidebarBody({ onNavClick }: { onNavClick?: () => void }) {
         ))}
       </nav>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between border-t border-border px-4 py-3">
+      <div className="space-y-2 border-t border-border px-3 py-3">
         <ThemeToggle />
-        <span className="text-xs text-muted-foreground">v1.1.0</span>
+        <div className="flex items-center gap-3 px-2.5 text-xs text-muted-foreground">
+          {legalLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={onNavClick}
+              aria-current={pathname.startsWith(link.href) ? "page" : undefined}
+              className={cn(
+                "transition-colors hover:text-foreground",
+                pathname.startsWith(link.href) && "text-foreground",
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <span className="figure ml-auto">v1.1.0</span>
+        </div>
       </div>
     </>
   );
@@ -109,87 +151,69 @@ export function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const currentPage =
-    navLinks.find((l) =>
+    allLinks.find((l) =>
       l.href === "/" ? pathname === "/" : pathname.startsWith(l.href),
     )?.label ?? "Dashboard";
 
+  useEffect(() => {
+    if (!mobileOpen) {
+      return;
+    }
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobileOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mobileOpen]);
+
   return (
     <>
-      {/* ── Desktop sidebar ─────────────────────────────────────── */}
-      <aside className="hidden h-screen w-64 shrink-0 flex-col bg-card lg:flex sticky top-0 border-r border-border">
+      {/* Desktop sidebar */}
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-card lg:flex">
         <SidebarBody />
       </aside>
 
-      {/* ── Mobile top bar ───────────────────────────────────────── */}
-      <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-border bg-card/95 px-4 backdrop-blur-sm lg:hidden">
+      {/* Mobile top bar */}
+      <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-2 border-b border-border bg-card px-3 lg:hidden">
         <button
           onClick={() => setMobileOpen(true)}
-          className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           aria-label="Open menu"
+          aria-expanded={mobileOpen}
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-5 w-5" strokeWidth={1.5} />
         </button>
-
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary/15">
-            <Wallet className="h-4 w-4 text-secondary" />
-          </div>
-          <span className="font-semibold">{currentPage}</span>
-        </div>
-
-        <div className="ml-auto">
-          <ThemeToggle />
-        </div>
+        <Mark />
+        <span className="text-sm font-medium">{currentPage}</span>
       </div>
 
-      {/* ── Mobile drawer overlay ─────────────────────────────────── */}
+      {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden">
-          {/* Panel */}
-          <div className="flex w-72 flex-col bg-card shadow-2xl">
-            {/* Drawer header */}
-            <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary/15">
-                  <Wallet className="h-4 w-4 text-secondary" />
-                </div>
-                <span className="font-brand text-lg font-semibold tracking-tight text-secondary">
-                  Spendr
-                </span>
-              </div>
+        <div
+          className="fixed inset-0 z-50 flex lg:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu"
+        >
+          <div className="flex w-72 flex-col border-r border-border bg-card shadow-xl shadow-black/10">
+            <div className="flex h-14 items-center justify-between pl-5 pr-3">
+              <Wordmark />
               <button
                 onClick={() => setMobileOpen(false)}
-                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 aria-label="Close menu"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" strokeWidth={1.5} />
               </button>
             </div>
-
-            {/* Drawer nav */}
-            <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-              {navLinks.map((link) => (
-                <NavItem
-                  key={link.href}
-                  href={link.href}
-                  icon={link.icon}
-                  label={link.label}
-                  onClick={() => setMobileOpen(false)}
-                />
-              ))}
-            </nav>
-
-            {/* Drawer footer */}
-            <div className="flex items-center justify-between border-t border-border px-4 py-3">
-              <ThemeToggle />
-              <span className="text-xs text-muted-foreground">v1.1.0</span>
-            </div>
+            <SidebarBody showBrand={false} onNavClick={() => setMobileOpen(false)} />
           </div>
-
-          {/* Backdrop */}
           <div
-            className="flex-1 bg-black/60 backdrop-blur-sm"
+            className="flex-1 bg-black/50"
             onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
           />
         </div>
       )}

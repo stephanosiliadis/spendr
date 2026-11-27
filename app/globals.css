@@ -3,65 +3,71 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 210 40% 98%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 210 40% 99%;
-    --card-foreground: 224 71.4% 4.1%;
+  /* Spendr tokens. Cool slate neutrals, money-blue brand, green for income, coral for expenses. */
+:root {
+    --background: 216 33% 97%;
+    --foreground: 222 35% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 35% 13%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 211 70% 38%;
-    --secondary-foreground: 210 20% 98%;
-    --accent: 169 68% 32%;
-    --accent-foreground: 0 0% 100%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 169 68% 32%;
+    --popover-foreground: 222 35% 13%;
+    --primary: 222 35% 13%;
+    --primary-foreground: 216 33% 98%;
+    /* secondary is the brand/action colour: money blue */
+    --secondary: 224 76% 48%;
+    --secondary-foreground: 0 0% 100%;
+    /* accent is the neutral hover/selection surface */
+    --accent: 216 30% 93%;
+    --accent-foreground: 222 35% 13%;
+    --muted: 216 25% 94%;
+    --muted-foreground: 218 14% 40%;
+    --destructive: 350 70% 46%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 216 22% 89%;
+    --input: 216 18% 80%;
+    --ring: 224 76% 48%;
     --radius: 0.6rem;
+    /* highlight: teal, for icon tiles, progress and the net line */
+    --highlight: 174 72% 30%;
 
-    /* Custom semantic colors */
-    --income: 145 55% 34%;
+    --income: 158 64% 30%;
     --income-foreground: 0 0% 100%;
-    --income-muted: 145 45% 93%;
-    --expense: 2 62% 52%;
-    --expense-foreground: 210 20% 98%;
-    --expense-muted: 2 55% 95%;
+    --income-muted: 158 40% 93%;
+    --expense: 350 62% 46%;
+    --expense-foreground: 0 0% 100%;
+    --expense-muted: 350 60% 95%;
+
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .dark {
-    --background: 225 27% 2%;
-    --foreground: 210 20% 98%;
-    --card: 225 27% 5%;
-    --card-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --popover: 225 27% 5%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 225 27% 2%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 211 68% 58%;
-    --secondary-foreground: 210 20% 98%;
-    --accent: 169 62% 52%;
-    --accent-foreground: 225 27% 5%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 169 62% 52%;
+    --background: 222 26% 8%;
+    --foreground: 214 30% 94%;
+    --card: 222 24% 11%;
+    --card-foreground: 214 30% 94%;
+    --popover: 222 24% 12%;
+    --popover-foreground: 214 30% 94%;
+    --primary: 214 30% 94%;
+    --primary-foreground: 222 26% 8%;
+    --secondary: 218 92% 68%;
+    --secondary-foreground: 222 40% 8%;
+    --accent: 222 20% 17%;
+    --accent-foreground: 214 30% 94%;
+    --muted: 222 20% 15%;
+    --muted-foreground: 218 14% 64%;
+    --destructive: 350 85% 70%;
+    --destructive-foreground: 222 40% 8%;
+    --border: 222 18% 20%;
+    --input: 222 16% 28%;
+    --ring: 218 92% 68%;
+    --highlight: 172 66% 55%;
 
-    /* Custom semantic colors */
-    --income: 145 55% 58%;
-    --income-foreground: 144.9 80.4% 10%;
-    --income-muted: 145 40% 14%;
-    --expense: 2 62% 64%;
-    --expense-foreground: 210 20% 98%;
-    --expense-muted: 2 45% 16%;
+    --income: 156 60% 58%;
+    --income-foreground: 222 40% 8%;
+    --income-muted: 156 25% 14%;
+    --expense: 350 85% 72%;
+    --expense-foreground: 222 40% 8%;
+    --expense-muted: 350 30% 15%;
   }
 }
 
@@ -69,12 +75,56 @@
   * {
     @apply border-border;
   }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    @apply bg-background text-foreground antialiased;
+    text-rendering: optimizeLegibility;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-brand font-semibold tracking-tight;
+  }
+  a, button, [role="button"], input, select {
+    touch-action: manipulation;
+  }
+  ::selection {
+    background: hsl(var(--secondary) / 0.25);
+  }
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Figures: tabular numerals so amounts align in a column */
+  .figure {
+    @apply tabular-nums;
+  }
+  /* Signature: ledger leader, a dotted rule joining a label to its amount */
+  .leader {
+    @apply mx-2 min-w-4 flex-1 self-end border-b border-dotted border-muted-foreground/40;
+    margin-bottom: 0.3em;
+  }
+  .page-enter {
+    animation: page-enter 240ms var(--ease-out) both;
+  }
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
