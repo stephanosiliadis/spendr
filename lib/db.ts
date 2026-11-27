@@ -38,6 +38,7 @@ const JOURNAL_PATH = path.join(DATA_DIR, "transaction-journal.json");
 const BUDGETS_PATH = path.join(DATA_DIR, "category-budgets.json");
 const CATEGORY_RULES_PATH = path.join(DATA_DIR, "category-rules.json");
 const SAVINGS_GOALS_PATH = path.join(DATA_DIR, "savings-goals.json");
+const DAILY_BACKUP_DIR = process.env.DATA_BACKUP_DIR ?? path.join(DATA_DIR, "backups", "daily");
 export const UNDO_WINDOW_MS = 60_000;
 
 interface DeletedTransaction {
@@ -48,6 +49,19 @@ interface DeletedTransaction {
 }
 
 type ImportResult = { imported: number; skipped: number };
+export function previewImport(inputs: TransactionInput[]): { newCount: number; duplicateCount: number } {
+  const { transactions } = validateImportRequest({ transactions: inputs, skipDuplicates: true, operationId: randomUUID() });
+  const seen = new Set(readAll().map(transactionFingerprint));
+  const rules = getCategoryRules();
+  let newCount = 0;
+  let duplicateCount = 0;
+  for (const input of transactions) {
+    const category = input.splits?.[0].category ?? resolveCategory(input.description, input.category, rules);
+    const key = transactionFingerprint({ ...input, category });
+    if (seen.has(key)) {duplicateCount++;} else {newCount++; seen.add(key);}
+  }
+  return { newCount, duplicateCount };
+}
 type RestoreResult = { restored: number; recoveryFile: string };
 interface OperationReceipt {
   id: string;
@@ -69,10 +83,29 @@ if (!fs.existsSync(DATA_DIR)) {
 // ──────────────────────────────────────────────
 function readAll(): Transaction[] {
   recoverPendingWrite();
+  createDailyBackupIfNeeded();
   if (!fs.existsSync(JSON_PATH)) {return [];}
   const transactions: unknown = JSON.parse(fs.readFileSync(JSON_PATH, "utf8"));
   if (!Array.isArray(transactions)) {throw new Error("Transaction storage must be an array.");}
   return transactions as Transaction[];
+}
+
+function createDailyBackupIfNeeded(): void {
+  const day = new Date().toISOString().slice(0, 10);
+  const filename = path.join(DAILY_BACKUP_DIR, `spendr-${day}.json`);
+  if (fs.existsSync(filename)) {return;}
+  const transactions: unknown = fs.existsSync(JSON_PATH)
+    ? JSON.parse(fs.readFileSync(JSON_PATH, "utf8")) : [];
+  if (!Array.isArray(transactions)) {throw new Error("Transaction storage must be an array.");}
+  const readArray = (file: string) => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : [];
+  const backup: SpendrBackup = {
+    app: "spendr", version: 1, createdAt: new Date().toISOString(), settings: { theme: "system" },
+    transactions: transactions as Transaction[], budgets: readArray(BUDGETS_PATH),
+    categoryRules: readArray(CATEGORY_RULES_PATH), savingsGoals: readArray(SAVINGS_GOALS_PATH),
+  };
+  validateBackup(backup);
+  fs.mkdirSync(DAILY_BACKUP_DIR, { recursive: true });
+  writeJsonAtomically(filename, backup);
 }
 
 function syncDirectory(directory: string): void {
@@ -250,6 +283,21 @@ export function getCategoryRules(): CategoryRule[] {
 export function saveCategoryRules(rules: CategoryRule[]): CategoryRule[] {
   writeJsonAtomically(CATEGORY_RULES_PATH, rules);
   return rules;
+}
+
+export function recategorizeTransactions(): number {
+  const transactions = readAll();
+  const rules = getCategoryRules();
+  let changed = 0;
+  const updated = transactions.map((transaction) => {
+    if (transaction.category !== "Other") {return transaction;}
+    const category = resolveCategory(transaction.description, "Other", rules);
+    if (category === transaction.category) {return transaction;}
+    changed++;
+    return { ...transaction, category };
+  });
+  if (changed) {commitTransactions(updated);}
+  return changed;
 }
 
 export function getSavingsGoals(): SavingsGoal[] {

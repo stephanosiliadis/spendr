@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CategoryChart } from "@/components/category-chart";
+import { CategoryDonut } from "@/components/category-donut";
 import { MonthlyChart } from "@/components/monthly-chart";
 import { StatsCards } from "@/components/stats-cards";
 import type { CategoryData, Insights } from "@/lib/types";
@@ -341,7 +341,7 @@ export default function InsightsPage() {
         {/* Income tab */}
         <TabsContent value="income" className="space-y-6">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <CategoryChart
+            <CategoryDonut
               data={insights?.incomeCategoryData ?? []}
               title="Income by Category"
               loading={loading}
@@ -370,7 +370,7 @@ export default function InsightsPage() {
         {/* Expenses tab */}
         <TabsContent value="expenses" className="space-y-6">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <CategoryChart
+            <CategoryDonut
               data={insights?.expenseCategoryData ?? []}
               title="Expenses by Category"
               loading={loading}

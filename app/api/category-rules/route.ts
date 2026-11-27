@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
-import { getCategoryRules, saveCategoryRules } from "@/lib/db";
+import { getCategoryRules, recategorizeTransactions, saveCategoryRules } from "@/lib/db";
 import { CATEGORIES, type Category, type CategoryRule } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +18,9 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body: unknown = await request.json();
+    if (body && typeof body === "object" && "action" in body && body.action === "reapply") {
+      return NextResponse.json({ updated: recategorizeTransactions() });
+    }
     if (!body || typeof body !== "object" || !("matchText" in body) || !("category" in body)) {
       return NextResponse.json({ error: "Provide a phrase and category." }, { status: 400 });
     }

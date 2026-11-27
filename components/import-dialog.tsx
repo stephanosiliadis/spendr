@@ -76,6 +76,7 @@ export function ImportDialog({
   const [reading, setReading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [skipDuplicates, setSkipDuplicates] = useState(true);
+  const [duplicatePreview, setDuplicatePreview] = useState<{ newCount: number; duplicateCount: number } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const readVersion = useRef(0);
   const session = useRef(0);
@@ -121,6 +122,23 @@ export function ImportDialog({
     preview.errors.length === 0 &&
     !reading &&
     !submitting;
+
+  useEffect(() => {
+    setDuplicatePreview(null);
+    if (!open || !preview?.transactions.length || preview.errors.length) {return;}
+    const controller = new AbortController();
+    fetch("/api/import", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ previewOnly: true, transactions: preview.transactions }),
+      signal: controller.signal,
+    }).then(async (response) => {
+      const data = await response.json();
+      if (response.ok && Number.isInteger(data.newCount) && Number.isInteger(data.duplicateCount)) {
+        setDuplicatePreview(data);
+      }
+    }).catch(() => undefined);
+    return () => controller.abort();
+  }, [open, preview]);
 
   function changeOpen(next: boolean) {
     if (submitLock.current) {
@@ -379,6 +397,11 @@ export function ImportDialog({
                 {preview.transactions.length} of {preview.totalRows}{" "}
                 transactions valid
               </h3>
+              {duplicatePreview && (
+                <p className="text-sm text-muted-foreground" aria-live="polite">
+                  {duplicatePreview.newCount} new, {duplicatePreview.duplicateCount} duplicate{duplicatePreview.duplicateCount === 1 ? "" : "s"} based on current data.
+                </p>
+              )}
               {preview.errors.length > 0 && (
                 <div
                   role="alert"

@@ -111,7 +111,9 @@ From **Transactions → Data → Import CSV**, select a header-first comma- or s
 - Quoted commas, escaped quotes, multiline fields, UTF-8 BOM, and CRLF line endings are supported.
 - Any invalid row blocks the entire import. CSV files are limited to 5 MiB and 10,000 transactions.
 - Duplicate skipping is enabled by default. It compares type, amount, trimmed description, date, category, and recurring status, including duplicates within the import file.
+- The preview estimates new and duplicate rows against the current store. Import checks again on submission, since the store may change after preview.
 - Import operation IDs make retries safe, including when duplicate skipping is off. The browser stores retry fingerprints and IDs in session storage, not financial payloads. If session storage is unavailable, retry protection lasts only for the current page session.
+- Category rules apply to imported rows categorized as Other. Use “Apply rules to existing transactions” on the Category rules page to update matching existing Other entries.
 
 ## 📤 Export, Backup, and Restore
 
@@ -120,6 +122,8 @@ The transaction export downloads the complete transaction history, not just the 
 A version 1 backup includes transactions, IDs, recurring flags, splits, budgets, category rules, savings goals, creation time, and the current theme preference. Backup files are limited to 100 MiB and 100,000 transactions. Restore validates the file and requires explicit confirmation before replacing current data. An empty transaction list is a valid backup and can clear the active transaction dataset. Restore invalidates pending Undo actions and creates a recovery snapshot of the previous data. The UI offers a download link for that snapshot after restore.
 
 Recovery snapshots are stored in `data/backups/` (or under the configured `DATA_DIR`) and are retained until manually removed. Treat backups and recovery snapshots as sensitive financial records. Back up the complete data directory securely; a portable backup downloaded through the app does not include temporary Undo records or retry receipts.
+
+Spendr creates one automatic versioned backup per calendar day when the store is accessed. By default these are in `data/backups/daily/`; set `DATA_BACKUP_DIR` to place them on an independently protected location. The server must be running and accessed that day for a backup to be created.
 
 ## 🔌 API Routes
 

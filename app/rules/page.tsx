@@ -77,6 +77,21 @@ export default function CategoryRulesPage() {
     }
   };
 
+  const reapplyRules = async () => {
+    setSaving(true);
+    try {
+      const response = await fetch("/api/category-rules", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reapply" }),
+      });
+      const data = await response.json();
+      if (!response.ok) {throw new Error(data.error ?? "Could not apply rules.");}
+      toast.success(`Updated ${data.updated} transaction${data.updated === 1 ? "" : "s"}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not apply rules.");
+    } finally { setSaving(false); }
+  };
+
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 p-4 pt-20 sm:p-6 sm:pt-20 lg:p-8">
       <header>
@@ -92,10 +107,13 @@ export default function CategoryRulesPage() {
             <CardTitle className="text-lg">Your rules</CardTitle>
             <p className="text-sm text-muted-foreground">
               Rules apply when a transaction is set to Other. A category you choose yourself is kept.
-              Longer matching phrases take priority. Existing entries change only when you edit and save them.
+              Longer matching phrases take priority. Apply rules below to update existing entries.
             </p>
           </CardHeader>
           <CardContent>
+            <Button type="button" variant="outline" className="mb-4" disabled={saving || loading || rules.length === 0} onClick={reapplyRules}>
+              Apply rules to existing transactions
+            </Button>
             {loading ? (
               <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading rules…
